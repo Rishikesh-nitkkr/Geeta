@@ -6,9 +6,11 @@ import com.gitamentor.model.UserQuery;
 import com.gitamentor.repository.ShlokaRepository;
 import com.gitamentor.repository.UnansweredQueryRepository;
 import com.gitamentor.repository.UserQueryRepository;
+import com.gitamentor.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 public class MentorService {
@@ -16,6 +18,7 @@ public class MentorService {
     private final ShlokaRepository shlokaRepository;
     private final UserQueryRepository userQueryRepository;
     private final UnansweredQueryRepository unansweredQueryRepository;
+    private final UserRepository userRepository;
 
     // ── Keyword → Category Map ──────────────────────────────
     private static final Map<String, String> KEYWORD_CATEGORY_MAP = new LinkedHashMap<>();
@@ -172,15 +175,20 @@ public class MentorService {
 
     public MentorService(ShlokaRepository shlokaRepository,
                          UserQueryRepository userQueryRepository,
-                         UnansweredQueryRepository unansweredQueryRepository) {
+                         UnansweredQueryRepository unansweredQueryRepository,
+                         UserRepository userRepository) {
         this.shlokaRepository = shlokaRepository;
         this.userQueryRepository = userQueryRepository;
         this.unansweredQueryRepository = unansweredQueryRepository;
+        this.userRepository = userRepository;
     }
 
     // ── Detect category from query ──────────────────────────
     public String detectCategory(String query) {
-        String lower = query.toLowerCase();
+        if (query == null || query.isBlank()) {
+            return null;
+        }
+        String lower = cleanQuery(query).toLowerCase(Locale.ROOT);
         for (Map.Entry<String, String> entry : KEYWORD_CATEGORY_MAP.entrySet()) {
             if (lower.contains(entry.getKey())) {
                 return entry.getValue();
@@ -192,18 +200,26 @@ public class MentorService {
     // ── Main mentor logic ───────────────────────────────────
     public Map<String, Object> getMentorResponse(Long userId, String query) {
         Map<String, Object> response = new HashMap<>();
-        String category = detectCategory(query);
+        String cleanQuery = cleanQuery(query);
+
+        if (userId == null || !userRepository.existsById(userId)) {
+            response.put("found", false);
+            response.put("message", "Your session could not be verified. Please sign in again and retry.");
+            return response;
+        }
+
+        String category = detectCategory(cleanQuery);
 
         // Save user query
         UserQuery userQuery = new UserQuery();
         userQuery.setUserId(userId);
-        userQuery.setQuery(query);
+        userQuery.setQuery(cleanQuery);
         userQuery.setCategory(category);
         userQueryRepository.save(userQuery);
 
         if (category == null) {
             // No category found — store as unanswered
-            saveUnanswered(userId, query);
+            saveUnanswered(userId, cleanQuery);
             response.put("found", false);
             response.put("message", "O Devotee, your question has been received with reverence. " +
                 "This matter requires deeper wisdom from our scriptures. " +
@@ -215,18 +231,18 @@ public class MentorService {
         List<Shloka> shlokas = shlokaRepository.findByCategory(category);
 
         if (shlokas.isEmpty()) {
-            saveUnanswered(userId, query);
+            saveUnanswered(userId, cleanQuery);
             response.put("found", false);
             response.put("message", "O Seeker, no specific teaching was found for this matter in our current collection. Your query has been saved for review.");
             return response;
         }
 
         // Pick random shloka from the matched category
-        Shloka shloka = shlokas.get(new Random().nextInt(shlokas.size()));
+        Shloka shloka = shlokas.get(ThreadLocalRandom.current().nextInt(shlokas.size()));
 
         response.put("found", true);
         response.put("category", category);
-        response.put("problem", query);
+        response.put("problem", cleanQuery);
         response.put("sanskrit", shloka.getSanskrit());
         response.put("meaning", shloka.getMeaning());
         response.put("explanation", shloka.getExplanation());
@@ -241,6 +257,13 @@ public class MentorService {
         uq.setUserId(userId);
         uq.setQuery(query);
         unansweredQueryRepository.save(uq);
+    }
+
+    private String cleanQuery(String query) {
+        if (query == null) {
+            return "";
+        }
+        return query.trim().replaceAll("[\\p{Cntrl}&&[^\r\n\t]]", "");
     }
 
     private String buildGuidance(String category) {

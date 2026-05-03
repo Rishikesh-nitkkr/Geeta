@@ -3,108 +3,64 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Home — Gita Mentor</title>
+  <meta name="description" content="Gita Mentor home dashboard for spiritual guidance and quiz practice." />
+  <title>Home - Gita Mentor</title>
   <link rel="stylesheet" href="../css/style.css" />
 </head>
 <body>
-
-<div class="page-wrapper">
-
-  <!-- Navbar -->
-  <nav class="navbar">
-    <a class="navbar-brand" href="home.html">
-      <span class="om">ॐ</span>
-      <span>Gita Mentor</span>
-    </a>
-    <div class="navbar-right">
-      <span class="nav-username" id="nav-username"></span>
-      <button class="btn-nav" id="logout-btn">Logout</button>
-    </div>
-  </nav>
-
-  <!-- Main -->
-  <main class="main-content">
-
-    <div class="home-hero">
-      <span class="om-hero">ॐ</span>
-      <h1>Welcome to the Divine Ashram</h1>
-      <p>"Whenever righteousness declines, I shall arise." — Bhagavad Gita 4.7</p>
-    </div>
-
-    <div class="divider"></div>
-
-    <p class="section-subtext" style="text-align:center;">
-      Choose your path, O Seeker. What does your soul seek today?
-    </p>
-
-    <div class="home-cards">
-
-      <!-- Krishna Mentorship -->
-      <a class="home-card" href="mentor.html">
-        <span class="card-icon">🪷</span>
-        <h2>Krishna Mentorship</h2>
-        <p>
-          Share your life challenges with Krishna. Receive guidance from the
-          Bhagavad Gita through relevant shlokas, their meaning, and
-          practical wisdom for your modern life.
-        </p>
-        <span class="card-tag">Seek Wisdom</span>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <div class="page-wrapper">
+    <nav class="navbar" aria-label="Primary navigation">
+      <a class="navbar-brand" href="home.html" aria-label="Gita Mentor home">
+        <span class="om" aria-hidden="true">ॐ</span>
+        <span>Gita Mentor</span>
       </a>
-
-      <!-- Quiz -->
-      <a class="home-card" href="quiz.html">
-        <span class="card-icon">📿</span>
-        <h2>Gita Quiz</h2>
-        <p>
-          Test your understanding of the Bhagavad Gita's teachings.
-          Questions are tailored to the topics you have explored in
-          your mentorship sessions.
-        </p>
-        <span class="card-tag">Test Knowledge</span>
-      </a>
-
-    </div>
-
-    <!-- Motivational Quote Strip -->
-    <div style="margin-top:3rem; text-align:center;">
-      <div style="
-        background: linear-gradient(135deg, var(--night) 0%, var(--night-soft) 100%);
-        border-radius: var(--radius-lg);
-        padding: 2rem 2.5rem;
-        color: var(--gold-light);
-        font-style: italic;
-        font-size: 1.05rem;
-        line-height: 1.8;
-        position: relative;
-        overflow: hidden;
-      ">
-        <span style="
-          position:absolute; left:1rem; top:0.5rem;
-          font-size:4rem; color:rgba(240,192,96,0.1);
-          font-family: Georgia, serif; line-height:1;
-        ">"</span>
-        The soul is never born nor dies at any time. It has not come into being,
-        does not come into being, and will not come into being. It is unborn,
-        eternal, ever-existing, and primeval.
-        <br/>
-        <span style="color:var(--saffron-light); font-size:0.88rem; font-style:normal; font-family: var(--font-display); letter-spacing:0.08em;">
-          — Bhagavad Gita 2.20
-        </span>
+      <div class="navbar-right">
+        <span class="nav-username" id="nav-username"></span>
+        <button class="btn-nav" id="logout-btn" type="button">Logout</button>
       </div>
-    </div>
+    </nav>
 
-  </main>
+    <main class="main-content" id="main-content">
+      <section class="home-hero" aria-labelledby="home-title">
+        <span class="om-hero" aria-hidden="true">ॐ</span>
+        <p class="eyebrow">Bhagavad Gita guidance</p>
+        <h1 id="home-title">Gita Mentor</h1>
+        <p class="hero-copy">Reflect on a life challenge, receive a relevant shloka, and test what you have learned.</p>
+      </section>
 
-  <footer class="footer">
-    <span>ॐ</span> Bhagavad Gita Mentor &nbsp;|&nbsp; Built with devotion &nbsp;|&nbsp; <span>ॐ</span>
-  </footer>
+      <section class="home-cards" aria-label="Main actions">
+        <a class="home-card" href="mentor.html">
+          <span class="card-icon" aria-hidden="true">✦</span>
+          <span class="card-kicker">Guidance</span>
+          <h2>Krishna Mentorship</h2>
+          <p>Ask about stress, fear, focus, career decisions, discipline, peace, or confidence.</p>
+          <span class="card-tag">Seek Wisdom</span>
+        </a>
 
-</div>
+        <a class="home-card" href="quiz.html">
+          <span class="card-icon" aria-hidden="true">◆</span>
+          <span class="card-kicker">Practice</span>
+          <h2>Gita Quiz</h2>
+          <p>Answer focused questions based on the topics you have explored in mentorship.</p>
+          <span class="card-tag">Test Knowledge</span>
+        </a>
+      </section>
 
-<script src="../js/utils.js"></script>
-<script>
-  requireAuth();
-  initNavbar();
-</script>
+      <section class="quote-panel" aria-label="Featured verse">
+        <p>
+          The soul is never born, nor does it ever die. It is unborn, eternal, ever-existing, and primeval.
+        </p>
+        <span>Bhagavad Gita 2.20</span>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span aria-hidden="true">ॐ</span> Bhagavad Gita Mentor
+    </footer>
+  </div>
+
+  <script src="../js/utils.js"></script>
+  <script src="../js/home.js"></script>
 </body>
 </html>

@@ -3,96 +3,74 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Register — Gita Mentor</title>
+  <meta name="description" content="Create your Gita Mentor account." />
+  <title>Register - Gita Mentor</title>
   <link rel="stylesheet" href="../css/style.css" />
 </head>
 <body>
+  <main class="auth-page">
+    <section class="auth-card" aria-labelledby="register-title">
+      <div class="auth-logo">
+        <span class="om-big" aria-hidden="true">ॐ</span>
+        <h1 id="register-title">Create Account</h1>
+        <p>Begin a quiet practice of reflection and learning</p>
+      </div>
 
-<div class="auth-page">
-  <div class="auth-card">
+      <div id="register-alert" class="alert" aria-live="polite"></div>
 
-    <div class="auth-logo">
-      <span class="om-big">ॐ</span>
-      <h1>Join the Ashram</h1>
-      <p>Begin your journey with Krishna's wisdom</p>
-    </div>
+      <form id="register-form" class="stack" novalidate>
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            placeholder="3-50 characters"
+            autocomplete="username"
+            minlength="3"
+            maxlength="50"
+            required
+          />
+        </div>
 
-    <div id="register-alert" class="alert"></div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="At least 8 characters"
+            autocomplete="new-password"
+            minlength="8"
+            maxlength="128"
+            required
+          />
+        </div>
 
-    <div class="form-group">
-      <label for="username">Choose Username</label>
-      <input type="text" id="username" placeholder="Your spiritual name" autocomplete="username" />
-    </div>
+        <div class="form-group">
+          <label for="confirm-password">Confirm Password</label>
+          <input
+            type="password"
+            id="confirm-password"
+            name="confirmPassword"
+            placeholder="Repeat your password"
+            autocomplete="new-password"
+            minlength="8"
+            maxlength="128"
+            required
+          />
+        </div>
 
-    <div class="form-group">
-      <label for="password">Choose Password</label>
-      <input type="password" id="password" placeholder="At least 4 characters" autocomplete="new-password" />
-    </div>
+        <button class="btn btn-primary" id="register-btn" type="submit">Begin</button>
+      </form>
 
-    <div class="form-group">
-      <label for="confirm-password">Confirm Password</label>
-      <input type="password" id="confirm-password" placeholder="Repeat your password" autocomplete="new-password" />
-    </div>
+      <p class="auth-switch">
+        Already have an account? <a href="login.html">Sign in</a>
+      </p>
+    </section>
+  </main>
 
-    <button class="btn btn-primary" id="register-btn" onclick="handleRegister()">
-      🌸 &nbsp; Begin My Journey
-    </button>
-
-    <div class="auth-switch">
-      Already a devotee? <a href="login.html">Login here</a>
-    </div>
-
-  </div>
-</div>
-
-<script src="../js/utils.js"></script>
-<script>
-  if (Session.isLoggedIn()) window.location.href = 'home.html';
-
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Enter') handleRegister();
-  });
-
-  async function handleRegister() {
-    const username  = document.getElementById('username').value.trim();
-    const password  = document.getElementById('password').value;
-    const confirm   = document.getElementById('confirm-password').value;
-    const btn       = document.getElementById('register-btn');
-
-    if (!username || !password || !confirm) {
-      showAlert('register-alert', 'Please fill in all fields.', 'error');
-      return;
-    }
-
-    if (password.length < 4) {
-      showAlert('register-alert', 'Password must be at least 4 characters.', 'error');
-      return;
-    }
-
-    if (password !== confirm) {
-      showAlert('register-alert', 'Passwords do not match. Please try again.', 'error');
-      return;
-    }
-
-    btn.disabled    = true;
-    btn.textContent = 'Creating account…';
-
-    try {
-      const data = await apiPost('/register', { username, password });
-
-      if (data.success) {
-        showAlert('register-alert', data.message + ' Redirecting to login…', 'success');
-        setTimeout(() => window.location.href = 'login.html', 1500);
-      } else {
-        showAlert('register-alert', data.message, 'error');
-      }
-    } catch (err) {
-      showAlert('register-alert', 'Cannot connect to server. Please ensure the backend is running.', 'error');
-    } finally {
-      btn.disabled  = false;
-      btn.innerHTML = '🌸 &nbsp; Begin My Journey';
-    }
-  }
-</script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/auth.js"></script>
 </body>
 </html>

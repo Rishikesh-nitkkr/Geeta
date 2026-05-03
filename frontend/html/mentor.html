@@ -3,241 +3,132 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Krishna Mentorship — Gita Mentor</title>
+  <meta name="description" content="Ask Gita Mentor for Bhagavad Gita based guidance." />
+  <title>Krishna Mentorship - Gita Mentor</title>
   <link rel="stylesheet" href="../css/style.css" />
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <div class="page-wrapper">
+    <nav class="navbar" aria-label="Primary navigation">
+      <a class="navbar-brand" href="home.html" aria-label="Gita Mentor home">
+        <span class="om" aria-hidden="true">ॐ</span>
+        <span>Gita Mentor</span>
+      </a>
+      <div class="navbar-right">
+        <span class="nav-username" id="nav-username"></span>
+        <a class="btn-nav" href="home.html">Home</a>
+        <button class="btn-nav" id="logout-btn" type="button">Logout</button>
+      </div>
+    </nav>
 
-<div class="page-wrapper">
+    <main class="main-content" id="main-content">
+      <header class="page-header">
+        <p class="eyebrow">Guidance</p>
+        <h1 class="section-heading">Krishna Mentorship</h1>
+        <p class="section-subtext">Share the challenge in plain words. The app will match it to a Gita teaching.</p>
+      </header>
 
-  <!-- Navbar -->
-  <nav class="navbar">
-    <a class="navbar-brand" href="home.html">
-      <span class="om">ॐ</span>
-      <span>Gita Mentor</span>
-    </a>
-    <div class="navbar-right">
-      <span class="nav-username" id="nav-username"></span>
-      <a class="btn-nav" href="home.html">← Home</a>
-      <button class="btn-nav" id="logout-btn">Logout</button>
-    </div>
-  </nav>
+      <section class="mentor-input-area" aria-labelledby="mentor-form-title">
+        <h2 class="sr-only" id="mentor-form-title">Ask a mentorship question</h2>
+        <div id="mentor-alert" class="alert" aria-live="polite"></div>
 
-  <!-- Main -->
-  <main class="main-content">
+        <form id="mentor-form" class="mentor-form" novalidate>
+          <div class="form-group">
+            <label for="user-query">Your Problem or Question</label>
+            <textarea
+              id="user-query"
+              name="query"
+              placeholder="Example: I am feeling stressed about my career decisions."
+              minlength="3"
+              maxlength="1000"
+              required
+            ></textarea>
+          </div>
 
-    <h2 class="section-heading">🪷 Krishna Mentorship</h2>
-    <p class="section-subtext">
-      Tell Krishna what troubles you, O Arjuna. He listens to every soul.
-    </p>
+          <button class="btn btn-primary ask-button" id="ask-btn" type="submit">Ask Krishna</button>
+        </form>
 
-    <!-- Input Area -->
-    <div class="mentor-input-area">
-      <div class="mentor-input-row">
-        <div class="form-group">
-          <label for="user-query">Your Problem or Question</label>
-          <textarea id="user-query"
-            placeholder="e.g. I am feeling stressed about my career decisions and fear of failure…"
-          ></textarea>
+        <div class="suggested-topics" aria-label="Suggested questions">
+          <span class="topic-label">Try</span>
+          <button class="topic-chip" type="button" data-topic="I am feeling stressed and anxious">Stress</button>
+          <button class="topic-chip" type="button" data-topic="I have fear and feel scared">Fear</button>
+          <button class="topic-chip" type="button" data-topic="I feel angry and frustrated">Anger</button>
+          <button class="topic-chip" type="button" data-topic="I lack focus and get distracted easily">Focus</button>
+          <button class="topic-chip" type="button" data-topic="I feel demotivated and need motivation">Motivation</button>
+          <button class="topic-chip" type="button" data-topic="I am confused about my career decision">Career</button>
+          <button class="topic-chip" type="button" data-topic="I need discipline and better habits">Discipline</button>
+          <button class="topic-chip" type="button" data-topic="I am dealing with failure and mistakes">Failure</button>
+          <button class="topic-chip" type="button" data-topic="I want inner peace and calmness">Peace</button>
+          <button class="topic-chip" type="button" data-topic="I lack confidence and self belief">Confidence</button>
         </div>
-        <button class="btn btn-primary" id="ask-btn" onclick="askKrishna()"
-          style="width:auto; padding: 12px 24px; white-space:nowrap;">
-          Ask Krishna 🙏
-        </button>
+      </section>
+
+      <div class="loading-spinner" id="loading" aria-live="polite">
+        <div class="spinner" aria-hidden="true">
+          <span class="spinner-dot"></span>
+          <span class="spinner-dot"></span>
+          <span class="spinner-dot"></span>
+        </div>
+        <p>Finding a relevant teaching...</p>
       </div>
 
-      <!-- Suggested Topics -->
-      <div class="suggested-topics">
-        <span style="font-size:0.85rem; color:var(--text-dim); align-self:center;">Try:</span>
-        <span class="topic-chip" onclick="setTopic('I am feeling stressed and anxious')">Stress</span>
-        <span class="topic-chip" onclick="setTopic('I have a lot of fear and I am scared')">Fear</span>
-        <span class="topic-chip" onclick="setTopic('I feel angry and frustrated all the time')">Anger</span>
-        <span class="topic-chip" onclick="setTopic('I lack focus and get distracted easily')">Focus</span>
-        <span class="topic-chip" onclick="setTopic('I feel demotivated and have no motivation')">Motivation</span>
-        <span class="topic-chip" onclick="setTopic('I am confused about my career decision')">Career</span>
-        <span class="topic-chip" onclick="setTopic('I need discipline and I am lazy')">Discipline</span>
-        <span class="topic-chip" onclick="setTopic('I am dealing with failure and mistakes')">Failure</span>
-        <span class="topic-chip" onclick="setTopic('I want inner peace and calmness')">Peace</span>
-        <span class="topic-chip" onclick="setTopic('I feel lack of confidence and self doubt')">Confidence</span>
-      </div>
-    </div>
+      <section class="no-answer-banner" id="no-answer" aria-live="polite">
+        <div class="banner-icon" aria-hidden="true">ॐ</div>
+        <p id="no-answer-text"></p>
+        <a href="home.html" class="btn btn-outline-gold">Back Home</a>
+      </section>
 
-    <!-- Loading Spinner -->
-    <div class="loading-spinner" id="loading">
-      <div>
-        <span class="spinner-dot"></span>
-        <span class="spinner-dot"></span>
-        <span class="spinner-dot"></span>
-      </div>
-      <p style="margin-top:12px;">Krishna is reflecting on your question…</p>
-    </div>
+      <article class="response-card" id="response-card" aria-live="polite">
+        <header class="response-header">
+          <p class="krishna-label">Krishna speaks to you</p>
+          <h2 id="resp-problem">Your Problem</h2>
+        </header>
 
-    <!-- No Answer Banner -->
-    <div class="no-answer-banner" id="no-answer">
-      <div class="banner-icon">🙏</div>
-      <p id="no-answer-text"></p>
-      <br/>
-      <a href="home.html" class="btn btn-outline-gold" style="display:inline-flex; width:auto;">← Back to Home</a>
-    </div>
+        <div class="response-body">
+          <div class="category-row">
+            <span class="category-badge" id="resp-category-badge"></span>
+          </div>
 
-    <!-- Response Card -->
-    <div class="response-card" id="response-card">
+          <section class="response-section">
+            <h3 class="response-section-label">Shloka</h3>
+            <p class="sanskrit-text" id="resp-sanskrit"></p>
+          </section>
 
-      <!-- Header -->
-      <div class="response-header">
-        <div class="krishna-label">Krishna speaks to you</div>
-        <h3 id="resp-problem">Your Problem</h3>
-      </div>
+          <section class="response-section">
+            <h3 class="response-section-label">Meaning</h3>
+            <p class="meaning-text" id="resp-meaning"></p>
+          </section>
 
-      <!-- Body -->
-      <div class="response-body">
+          <section class="response-section">
+            <h3 class="response-section-label">Explanation</h3>
+            <p class="explanation-text" id="resp-explanation"></p>
+          </section>
 
-        <!-- Category badge -->
-        <div style="margin-bottom:1.5rem;">
-          <span id="resp-category-badge" style="
-            display:inline-block;
-            background: linear-gradient(135deg, var(--saffron), var(--gold));
-            color: white;
-            padding: 4px 16px;
-            border-radius: 20px;
-            font-family: var(--font-display);
-            font-size: 0.75rem;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-          "></span>
+          <section class="response-section">
+            <h3 class="response-section-label">Modern Life Example</h3>
+            <p class="example-text" id="resp-example"></p>
+          </section>
+
+          <section class="response-section">
+            <h3 class="response-section-label">Practical Guidance</h3>
+            <p class="guidance-box" id="resp-guidance"></p>
+          </section>
+
+          <div class="action-row">
+            <button class="btn btn-primary" id="ask-again-btn" type="button">Ask Another</button>
+            <a href="quiz.html" class="btn btn-dark">Take Quiz</a>
+          </div>
         </div>
+      </article>
+    </main>
 
-        <!-- Sanskrit Shloka -->
-        <div class="response-section">
-          <div class="response-section-label">📿 Shloka (Sanskrit)</div>
-          <div class="sanskrit-text" id="resp-sanskrit"></div>
-        </div>
+    <footer class="footer">
+      <span aria-hidden="true">ॐ</span> Bhagavad Gita Mentor
+    </footer>
+  </div>
 
-        <!-- Meaning -->
-        <div class="response-section">
-          <div class="response-section-label">📖 Meaning</div>
-          <p class="meaning-text" id="resp-meaning"></p>
-        </div>
-
-        <!-- Explanation -->
-        <div class="response-section">
-          <div class="response-section-label">💡 Explanation</div>
-          <p class="explanation-text" id="resp-explanation"></p>
-        </div>
-
-        <!-- Modern Life Example -->
-        <div class="response-section">
-          <div class="response-section-label">🌍 Modern Life Example</div>
-          <p class="example-text" id="resp-example"></p>
-        </div>
-
-        <!-- Practical Guidance -->
-        <div class="response-section">
-          <div class="response-section-label">🪷 Krishna's Guidance for You</div>
-          <div class="guidance-box" id="resp-guidance"></div>
-        </div>
-
-        <!-- Actions -->
-        <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:1.5rem;">
-          <button class="btn btn-primary" onclick="clearAndAskAgain()" style="width:auto;">
-            Ask Another Question
-          </button>
-          <a href="quiz.html" class="btn btn-dark" style="width:auto; text-decoration:none;">
-            📿 Take the Quiz
-          </a>
-        </div>
-
-      </div>
-    </div>
-
-  </main>
-
-  <footer class="footer">
-    <span>ॐ</span> Bhagavad Gita Mentor &nbsp;|&nbsp; Built with devotion &nbsp;|&nbsp; <span>ॐ</span>
-  </footer>
-
-</div>
-
-<script src="../js/utils.js"></script>
-<script>
-  requireAuth();
-  initNavbar();
-
-  function setTopic(text) {
-    document.getElementById('user-query').value = text;
-    document.getElementById('user-query').focus();
-  }
-
-  function clearAndAskAgain() {
-    document.getElementById('user-query').value = '';
-    document.getElementById('response-card').classList.remove('show');
-    document.getElementById('no-answer').classList.remove('show');
-    document.getElementById('user-query').focus();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  // Enter key in textarea (Ctrl+Enter to submit)
-  document.getElementById('user-query').addEventListener('keydown', e => {
-    if (e.key === 'Enter' && e.ctrlKey) askKrishna();
-  });
-
-  async function askKrishna() {
-    const query = document.getElementById('user-query').value.trim();
-    if (!query) {
-      document.getElementById('user-query').focus();
-      return;
-    }
-
-    const userId = Session.getUserId();
-    const btn    = document.getElementById('ask-btn');
-
-    // Hide previous results
-    document.getElementById('response-card').classList.remove('show');
-    document.getElementById('no-answer').classList.remove('show');
-
-    // Show loader
-    document.getElementById('loading').classList.add('show');
-    btn.disabled    = true;
-    btn.textContent = 'Seeking…';
-
-    try {
-      const data = await apiPost('/mentor', { userId, query });
-
-      document.getElementById('loading').classList.remove('show');
-
-      if (data.found) {
-        // Populate response card
-        document.getElementById('resp-problem').textContent        = '🙏 ' + data.problem;
-        document.getElementById('resp-category-badge').textContent = data.category.replace('_', ' ');
-        document.getElementById('resp-sanskrit').textContent       = data.sanskrit;
-        document.getElementById('resp-meaning').textContent        = data.meaning;
-        document.getElementById('resp-explanation').textContent    = data.explanation;
-        document.getElementById('resp-example').textContent        = data.lifeExample;
-        document.getElementById('resp-guidance').textContent       = data.guidance;
-        document.getElementById('response-card').classList.add('show');
-
-        // Smooth scroll to response
-        setTimeout(() => {
-          document.getElementById('response-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 100);
-
-      } else {
-        // No answer found
-        document.getElementById('no-answer-text').textContent = data.message;
-        document.getElementById('no-answer').classList.add('show');
-        document.getElementById('no-answer').scrollIntoView({ behavior: 'smooth' });
-      }
-
-    } catch (err) {
-      document.getElementById('loading').classList.remove('show');
-      document.getElementById('no-answer-text').textContent =
-        'Could not connect to the server. Please ensure the backend is running on port 8080.';
-      document.getElementById('no-answer').classList.add('show');
-    } finally {
-      btn.disabled    = false;
-      btn.textContent = 'Ask Krishna 🙏';
-    }
-  }
-</script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/mentor.js"></script>
 </body>
 </html>

@@ -1,262 +1,158 @@
-# 🪷 Bhagavad Gita Krishna Mentor
-### A Spiritual Web Application for Life Guidance
+# Bhagavad Gita Mentor
 
----
-## http://localhost:5500/html/login.html
----
+A full-stack web application that maps common life challenges to Bhagavad Gita teachings and generates quiz questions from the topics a user has explored.
 
-## 📁 PART 1 — Project Structure
+## Tech Stack
 
-```
-gita-mentor/
-│
-├── database/
-│   └── schema.sql                   ← All tables + 20 shlokas + quiz questions
-│
-├── backend/
-│   ├── pom.xml                      ← Maven dependencies (Spring Boot 3.2)
-│   └── src/main/
-│       ├── java/com/gitamentor/
-│       │   ├── GitaMentorApplication.java
-│       │   ├── config/
-│       │   │   └── SecurityConfig.java    ← BCrypt + CORS config
-│       │   ├── model/
-│       │   │   ├── User.java
-│       │   │   ├── Shloka.java
-│       │   │   ├── UserQuery.java
-│       │   │   ├── UnansweredQuery.java
-│       │   │   └── QuizQuestion.java
-│       │   ├── repository/
-│       │   │   ├── UserRepository.java
-│       │   │   ├── ShlokaRepository.java
-│       │   │   ├── UserQueryRepository.java
-│       │   │   ├── UnansweredQueryRepository.java
-│       │   │   └── QuizQuestionRepository.java
-│       │   ├── service/
-│       │   │   ├── AuthService.java       ← Register / Login logic
-│       │   │   ├── MentorService.java     ← Keyword detection + Shloka fetch
-│       │   │   └── QuizService.java       ← User-category quiz fetch
-│       │   └── controller/
-│       │       ├── AuthController.java    ← POST /register, POST /login
-│       │       ├── MentorController.java  ← POST /mentor, POST /save-unanswered
-│       │       └── QuizController.java    ← GET /quiz
-│       └── resources/
-│           └── application.properties
-│
-└── frontend/
-    ├── html/
-    │   ├── login.html
-    │   ├── register.html
-    │   ├── home.html
-    │   ├── mentor.html
-    │   └── quiz.html
-    ├── css/
-    │   └── style.css                ← Full spiritual design system
-    └── js/
-        └── utils.js                 ← Shared API helpers + session management
-```
+- Frontend: Vanilla HTML, CSS, and JavaScript
+- Backend: Java 17, Spring Boot 4.0.6, Spring Web, Spring Data JPA, Spring Security BCrypt, Spring Validation, Spring Actuator
+- Database: MySQL 8
+- Build: Maven
 
----
+## KRISHNA AI - Divine Life Guidance System
 
-## 🗄️ PART 2 — Database (see database/schema.sql)
+The repository now also includes a premium Next.js application in `krishna-ai/`.
 
-### Tables
-| Table               | Purpose                                      |
-|---------------------|----------------------------------------------|
-| `users`             | Registered user accounts (BCrypt passwords) |
-| `shlokas`           | 20 Bhagavad Gita shlokas across 20 topics   |
-| `user_queries`      | Every query a user makes (with category)    |
-| `unanswered_queries`| Queries where no shloka was found           |
-| `quiz_questions`    | MCQ questions (3 per major category)        |
+- Next.js 16, React 19, TypeScript
+- Tailwind CSS, Framer Motion, lucide-react
+- Secure API routes for Gita guidance, TTS, and talking-avatar provider integration
+- Local Gita semantic matching dataset with unit tests
+- Browser SpeechSynthesis, procedural OM/flute ambience, and animated avatar fallback when paid keys are not configured
 
----
-
-## 🔌 PART 3 — API Endpoints
-
-| Method | Endpoint           | Description                            |
-|--------|--------------------|----------------------------------------|
-| POST   | `/register`        | Register new user                      |
-| POST   | `/login`           | Login user → returns userId, username  |
-| POST   | `/mentor`          | Get Krishna's advice for a query       |
-| GET    | `/quiz?userId=X`   | Get 5 quiz questions for user          |
-| POST   | `/save-unanswered` | Manually save an unanswered query      |
-
-### Request / Response Examples
-
-**POST /register**
-```json
-Request:  { "username": "Arjuna", "password": "gita123" }
-Response: { "success": true, "message": "Registration successful!" }
-```
-
-**POST /login**
-```json
-Request:  { "username": "Arjuna", "password": "gita123" }
-Response: { "success": true, "userId": 1, "username": "Arjuna", "message": "..." }
-```
-
-## 📖 PART 5 — 20 Shlokas Dataset (Categories)
-
-| # | Category        | Gita Verse |
-|---|-----------------|------------|
-| 1 | stress          | 2.48       |
-| 2 | fear            | 2.23       |
-| 3 | anger           | 2.63       |
-| 4 | discipline      | 6.5        |
-| 5 | karma           | 2.47       |
-| 6 | motivation      | 3.35       |
-| 7 | focus           | 6.35       |
-| 8 | confusion       | 4.42       |
-| 9 | purpose         | 18.45      |
-|10 | duty            | 18.48      |
-|11 | leadership      | 3.21       |
-|12 | self_control    | 2.67       |
-|13 | detachment      | 2.71       |
-|14 | success         | 2.62       |
-|15 | failure         | 2.40       |
-|16 | mind_control    | 6.5 (Alt)  |
-|17 | consistency     | 9.22       |
-|18 | decision_making | 2.50       |
-|19 | peace           | 2.71       |
-|20 | confidence      | 4.39       |
-
----
-
-## 🚀 PART 6 — Run Instructions
-
-### Prerequisites
-- Java 17+
-- Maven 3.8+
-- MySQL 8.0+
-- Any browser (Chrome recommended)
-
----
-
-### Step 1 — Setup MySQL Database
-
-```sql
--- Open MySQL and run:
-mysql -u root -p
-
--- Then paste or source the SQL file:
-SOURCE /path/to/gita-mentor/database/schema.sql;
-
--- Verify:
-USE gita_mentor;
-SELECT COUNT(*) FROM shlokas;        -- Should show 20
-SELECT COUNT(*) FROM quiz_questions; -- Should show 30+
-```
-
----
-
-### Step 2 — Configure Database Password
-
-Open: `backend/src/main/resources/application.properties`
-
-```properties
-spring.datasource.username=root
-spring.datasource.password=YOUR_MYSQL_PASSWORD   ← Change this
-```
-
----
-
-### Step 3 — Run the Backend (Permanent Solution - No Target Lock)
+Run the new app:
 
 ```bash
-cd gita-mentor/backend
-mvn clean package -DskipTests
+cd krishna-ai
+npm install
+npm run dev
+npm run lint
+npm test
+npm run build
+```
+
+Environment:
+- Copy `krishna-ai/.env.example` to `krishna-ai/.env.local`.
+- Add `ELEVENLABS_API_KEY` and `ELEVENLABS_VOICE_ID` for premium generated voice.
+- Or add `OPENAI_API_KEY` for OpenAI TTS.
+- Add `DID_API_KEY` and `DID_SOURCE_URL` for provider-generated talking avatar video.
+- Without paid keys, the app still works with browser TTS, procedural OM/flute ambience, and an animated speaking avatar.
+
+## Project Structure
+
+```text
+database/schema.sql                         MySQL schema and seed data
+backend/pom.xml                             Maven dependencies and build
+backend/src/main/java/com/gitamentor        Spring Boot API
+backend/src/main/resources/application.properties
+frontend/html                               Static app pages
+frontend/css/style.css                      Shared responsive design system
+frontend/js                                Shared utilities and page scripts
+krishna-ai                                  Next.js Krishna AI immersive app
+.env.example                               Required local environment values
+run.bat                                    Windows helper to build and run backend
+```
+
+## API Endpoints
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| POST | `/register` | Create a user account |
+| POST | `/login` | Sign in and return a local session payload |
+| POST | `/mentor` | Match a user question to a Gita category and shloka |
+| POST | `/save-unanswered` | Save a question for review |
+| GET | `/quiz?userId=1` | Fetch quiz questions for a user |
+| GET | `/actuator/health` | Backend health check |
+
+## Environment Setup
+
+Copy `.env.example` values into your local shell, IDE run configuration, or deployment environment.
+
+Required values:
+
+```properties
+MYSQL_HOST=localhost
+MYSQL_PORT=3306
+MYSQL_DATABASE=gita_mentor
+MYSQL_USERNAME=root
+MYSQL_PASSWORD=your-local-password
+APP_CORS_ALLOWED_ORIGINS=http://localhost:5500,http://127.0.0.1:5500,null
+```
+
+Do not commit real passwords or API keys. `application.properties` reads from environment variables and no longer stores database credentials.
+
+## Database Setup
+
+Run the schema once in MySQL:
+
+```bash
+mysql -u root -p < database/schema.sql
+```
+
+The seed inserts are idempotent for fresh installs. If you previously ran an older version of the script and see duplicate shlokas or quiz rows, recreate the local `gita_mentor` database and run the current script again.
+
+Verify seed data:
+
+```sql
+USE gita_mentor;
+SELECT COUNT(*) FROM shlokas;
+SELECT COUNT(*) FROM quiz_questions;
+```
+
+## Run Locally
+
+Backend:
+
+```bash
+cd backend
+mvn clean package
 java -jar target/gita-mentor-1.0.0.jar
 ```
 
-- App runs on: `http://localhost:8080`
-- This builds a JAR and runs it separately, preventing target directory locks
-
-### Alternative: Development Mode (May Lock Target)
+Frontend:
 
 ```bash
-cd gita-mentor/backend
-mvn spring-boot:run
+cd frontend
+python -m http.server 5500
 ```
 
-⚠️ **Warning**: This locks the `target` directory. Use the JAR method above for permanent unlock.
+Open:
 
-Test it:
+```text
+http://localhost:5500/html/login.html
+```
+
+If the backend is deployed somewhere other than `http://localhost:8080`, load a small script before `utils.js` that sets:
+
+```js
+window.GITA_MENTOR_API_BASE = 'https://your-api-domain.example.com';
+```
+
+See `frontend/js/config.example.js`.
+
+## Quality Checks
+
 ```bash
-curl -X POST http://localhost:8080/register \
-  -H "Content-Type: application/json" \
-  -d '{"username":"testuser","password":"test123"}'
+cd backend
+mvn test
+mvn clean package
 ```
 
----
+For frontend syntax checks:
 
-### Step 4 — Open the Frontend
-
-Open any HTML file directly in your browser:
-```
-gita-mentor/frontend/html/login.html
-```
-
-Or serve with Python for best results:
 ```bash
-cd gita-mentor/frontend
-python3 -m http.server 5500
-# Then open: http://localhost:5500/html/login.html
+node --check frontend/js/utils.js
+node --check frontend/js/auth.js
+node --check frontend/js/home.js
+node --check frontend/js/mentor.js
+node --check frontend/js/quiz.js
 ```
 
-Or use VS Code **Live Server** extension → Right-click `login.html` → Open with Live Server.
+## Security Notes
 
----
-
-### Step 5 — Use the Application
-
-1. Open `login.html` → Register a new account
-2. Login → You are taken to Home
-3. Click **Krishna Mentorship** → Type your problem
-4. Try topics: stress, fear, anger, focus, motivation, career, failure
-5. Click **Quiz** → Answer 5 questions based on your searches
-6. View your final score with a Gita verse
-
----
-
-## ⚙️ How Keyword Detection Works
-
-The `MentorService.java` has a `KEYWORD_CATEGORY_MAP` with 80+ keyword → category mappings.
-
-When a user types: *"I am stressed about my career and fear of failure"*
-- "stress" → maps to `stress` category
-- "career" → maps to `decision_making` category
-- "fear"   → maps to `fear` category
-
-The **first match** is used to fetch a shloka. If no keyword matches → query is saved to `unanswered_queries` table for admin review.
-
----
-
-## 🔒 Security Notes
-
-- Passwords are hashed using **BCrypt** (never stored as plain text)
-- Session stored in browser `sessionStorage` (cleared on tab close)
-- CORS is open for local development (restrict in production)
-- No JWT tokens (kept simple for beginners)
-
----
-
-## 🛠️ Troubleshooting
-
-| Problem | Fix |
-|---------|-----|
-| "Cannot connect to server" | Ensure backend runs on port 8080 |
-| "Access denied" MySQL error | Check username/password in application.properties |
-| White page / JS errors | Open browser DevTools (F12) → Console |
-| Shlokas not found | Run `schema.sql` in MySQL to seed data |
-| Quiz shows 0 questions | Check `quiz_questions` table has data |
-
----
-
-## 🌸 Built with Devotion
-
-> *"Yoga is skill in action."* — Bhagavad Gita 2.50
-
-**Tech Stack:** Java 17 · Spring Boot 3.2 · MySQL 8 · Vanilla HTML/CSS/JS  
-**Design:** Spiritual saffron & gold palette · Cinzel & Crimson Pro fonts  
-**Fonts loaded from:** Google Fonts (requires internet on first load)
-
+- Passwords are stored with BCrypt hashes.
+- Database credentials come from environment variables.
+- CORS is restricted to configured origins.
+- Backend request bodies use validation DTOs.
+- API errors return safe messages without stack traces.
+- Frontend renders API data with `textContent`, including quiz options, to reduce XSS risk.
+- `sessionStorage` is used for a lightweight local session. Add server-side sessions or JWT before using this for real production accounts.

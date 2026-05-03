@@ -16,11 +16,12 @@ CREATE TABLE IF NOT EXISTS users (
 -- ── SHLOKAS ────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS shlokas (
     id          BIGINT AUTO_INCREMENT PRIMARY KEY,
-    category    VARCHAR(50)   NOT NULL,
+    category    VARCHAR(50)   NOT NULL UNIQUE,
     sanskrit    TEXT          NOT NULL,
     meaning     TEXT          NOT NULL,
     explanation TEXT          NOT NULL,
-    life_example TEXT         NOT NULL
+    life_example TEXT         NOT NULL,
+    INDEX idx_shlokas_category (category)
 );
 
 -- ── USER QUERIES ───────────────────────────────────────────
@@ -30,7 +31,9 @@ CREATE TABLE IF NOT EXISTS user_queries (
     query      TEXT         NOT NULL,
     category   VARCHAR(50),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    INDEX idx_user_queries_user_id (user_id),
+    INDEX idx_user_queries_category (category)
 );
 
 -- ── UNANSWERED QUERIES ─────────────────────────────────────
@@ -39,7 +42,8 @@ CREATE TABLE IF NOT EXISTS unanswered_queries (
     user_id    BIGINT NOT NULL,
     query      TEXT   NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    INDEX idx_unanswered_queries_user_id (user_id)
 );
 
 -- ── QUIZ QUESTIONS ─────────────────────────────────────────
@@ -51,13 +55,16 @@ CREATE TABLE IF NOT EXISTS quiz_questions (
     option_b       VARCHAR(255) NOT NULL,
     option_c       VARCHAR(255) NOT NULL,
     option_d       VARCHAR(255) NOT NULL,
-    correct_answer CHAR(1)     NOT NULL
+    correct_answer CHAR(1)     NOT NULL,
+    CHECK (correct_answer IN ('A', 'B', 'C', 'D')),
+    INDEX idx_quiz_questions_category (category),
+    UNIQUE KEY uq_quiz_questions_category_question (category, question(190))
 );
 
 -- ============================================================
 --  20 BHAGAVAD GITA SHLOKAS DATASET
 -- ============================================================
-INSERT INTO shlokas (category, sanskrit, meaning, explanation, life_example) VALUES
+INSERT IGNORE INTO shlokas (category, sanskrit, meaning, explanation, life_example) VALUES
 
 -- 1. STRESS
 ('stress',
@@ -202,7 +209,7 @@ INSERT INTO shlokas (category, sanskrit, meaning, explanation, life_example) VAL
 -- ============================================================
 --  QUIZ QUESTIONS (3 per category, 60 total)
 -- ============================================================
-INSERT INTO quiz_questions (category, question, option_a, option_b, option_c, option_d, correct_answer) VALUES
+INSERT IGNORE INTO quiz_questions (category, question, option_a, option_b, option_c, option_d, correct_answer) VALUES
 
 -- STRESS
 ('stress','According to Bhagavad Gita 2.48, what is Yoga?','Performing rituals daily','Acting with equanimity, free from attachment to success or failure','Meditating for hours','Praying to Krishna','B'),

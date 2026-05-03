@@ -1,0 +1,33 @@
+# Local secrets
+.env
+.env.*
+!.env.example
+
+# Java / Maven
+backend/target/
+*.class
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+
+# Logs
+*.log
+logs/
+frontend/*.log
+frontend/qa-screenshots/
+geeta-ai/.next/
+geeta-ai/node_modules/
+geeta-ai/coverage/
+geeta-ai/qa-screenshots/
+geeta-ai/chrome-profile-*/
+geeta-ai/chrome-crash/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
