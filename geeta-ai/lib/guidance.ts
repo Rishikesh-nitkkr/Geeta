@@ -1,60 +1,95 @@
 import { gitaVerses, situationMap } from "./gita-data";
 import type { GitaVerse, GuidanceResponse, SituationKey } from "./types";
 
+// ─── Greeting detection ───────────────────────────────────────────────────────
+const GREETING_RE = /^(hi|hello|hey|namaste|namaskar|hare krishna|jai shree krishna|jai sri krishna|good morning|good evening|good night|good afternoon|radhe radhe|om|ॐ)\b/i;
+
+export function isGreeting(query: string): boolean {
+  return GREETING_RE.test(query.trim());
+}
+
+// ─── Stop words ───────────────────────────────────────────────────────────────
 const stopWords = new Set([
-  "a",
-  "an",
-  "and",
-  "are",
-  "as",
-  "at",
-  "be",
-  "but",
-  "for",
-  "from",
-  "how",
-  "i",
-  "in",
-  "is",
-  "it",
-  "my",
-  "of",
-  "on",
-  "or",
-  "so",
-  "the",
-  "to",
-  "with",
-  "what",
-  "when",
-  "why"
+  "a","an","and","are","as","at","be","but","for","from","how",
+  "i","in","is","it","my","of","on","or","so","the","to","with",
+  "what","when","why","me","we","do","did","just","very","really"
 ]);
 
+// ─── Synonym / emotion tag expansion ─────────────────────────────────────────
 const synonymTags: Record<string, string[]> = {
-  anxious: ["stress", "fear", "anxiety"],
-  anxiety: ["stress", "fear", "overthinking"],
-  exam: ["stress", "study", "results"],
-  interview: ["career", "fear", "pressure"],
-  job: ["career", "duty", "stress"],
-  confused: ["confusion", "overthinking", "decision"],
-  confusion: ["confusion", "doubt", "decision"],
-  doubt: ["doubt", "overthinking"],
-  breakup: ["relationship", "emotions", "grief"],
-  angry: ["anger", "relationship"],
-  procrastination: ["discipline", "habit", "routine"],
-  lazy: ["discipline", "habit", "self-control"],
-  failed: ["failure", "resilience"],
-  marks: ["exam", "results", "stress"],
-  compare: ["comparison", "failure"],
-  comparison: ["comparison", "purpose"],
-  lonely: ["loneliness", "self-worth", "faith"],
-  depression: ["grief", "support", "hope"],
-  sad: ["grief", "emotions", "support"],
-  money: ["career", "fear", "stress"],
-  future: ["fear", "uncertainty", "career"],
-  focus: ["focus", "mind", "discipline"],
-  distracted: ["focus", "overthinking", "practice"],
-  meditation: ["meditation", "mind", "peace"]
+  // Original
+  anxious:        ["stress","fear","anxiety","overthinking"],
+  anxiety:        ["stress","fear","overthinking"],
+  exam:           ["stress","study","results"],
+  interview:      ["career","fear","pressure"],
+  job:            ["career","duty","stress"],
+  confused:       ["confusion","overthinking","decision"],
+  confusion:      ["confusion","doubt","decision"],
+  doubt:          ["doubt","overthinking"],
+  breakup:        ["relationship","emotions","grief"],
+  angry:          ["anger","relationship","impulse"],
+  procrastination:["discipline","habit","routine"],
+  lazy:           ["discipline","habit","self-control"],
+  failed:         ["failure","resilience"],
+  marks:          ["exam","results","stress"],
+  compare:        ["comparison","failure"],
+  comparison:     ["comparison","purpose"],
+  lonely:         ["loneliness","self-worth","faith"],
+  depression:     ["grief","support","hope"],
+  sad:            ["grief","emotions","support"],
+  money:          ["career","fear","stress"],
+  future:         ["fear","uncertainty","career"],
+  focus:          ["focus","mind","discipline"],
+  distracted:     ["focus","overthinking","practice"],
+  meditation:     ["meditation","mind","peace"],
+  // Emotions — positive
+  happy:          ["gratitude","peace","devotion","joy"],
+  happiness:      ["gratitude","peace","joy"],
+  joy:            ["gratitude","peace","devotion"],
+  grateful:       ["gratitude","devotion","faith","peace"],
+  gratitude:      ["gratitude","devotion","faith"],
+  excited:        ["motivation","energy","action"],
+  motivated:      ["discipline","action","duty","purpose"],
+  positive:       ["gratitude","hope","faith","peace"],
+  calm:           ["peace","meditation","mind"],
+  peaceful:       ["peace","meditation","gratitude"],
+  content:        ["gratitude","peace","detachment"],
+  // Emotions — negative / difficult
+  negative:       ["grief","fear","stress","overthinking"],
+  hopeless:       ["hope","grief","faith","support"],
+  helpless:       ["support","faith","hope","surrender"],
+  lost:           ["purpose","confusion","doubt","identity"],
+  worthless:      ["self-worth","identity","faith"],
+  heartbroken:    ["grief","relationship","emotions","loss"],
+  grief:          ["grief","support","emotions"],
+  guilt:          ["forgiveness","surrender","karma"],
+  shame:          ["self-worth","forgiveness","identity"],
+  regret:         ["surrender","forgiveness","action"],
+  jealous:        ["comparison","desire","ego"],
+  jealousy:       ["comparison","desire","ego"],
+  envy:           ["comparison","purpose","failure"],
+  hate:           ["anger","impulse","relationship"],
+  anger:          ["anger","impulse","relationship"],
+  frustrated:     ["stress","patience","duty"],
+  overwhelmed:    ["stress","anxiety","pressure"],
+  panic:          ["fear","stress","overthinking"],
+  scared:         ["fear","uncertainty","courage"],
+  worried:        ["overthinking","stress","fear"],
+  // Life situations
+  purpose:        ["purpose","dharma","confusion","identity"],
+  career:         ["career","duty","stress","purpose"],
+  relationship:   ["relationship","emotions","love"],
+  love:           ["relationship","devotion","emotions"],
+  family:         ["relationship","duty","emotions"],
+  health:         ["stress","patience","mind"],
+  study:          ["discipline","focus","stress"],
+  success:        ["action","duty","purpose"],
+  failure:        ["failure","resilience","purpose"],
+  habit:          ["discipline","routine","self-control"],
+  sleep:          ["stress","mind","peace"],
+  tired:          ["stress","discipline","patience"],
+  burnout:        ["stress","rest","detachment"],
+  bored:          ["discipline","purpose","action"],
 };
 
 function tokenize(value: string): string[] {
@@ -93,7 +128,10 @@ export function inferSituation(query: string, preferred?: string): SituationKey 
   return best;
 }
 
-export function rankVerses(query: string, preferredSituation?: string): Array<{ verse: GitaVerse; score: number; matchedTags: string[] }> {
+export function rankVerses(
+  query: string,
+  preferredSituation?: string
+): Array<{ verse: GitaVerse; score: number; matchedTags: string[] }> {
   const cleanQuery = query.trim();
   const tokens = expandTokens(tokenize(cleanQuery));
   const situation = inferSituation(cleanQuery, preferredSituation);
@@ -103,9 +141,17 @@ export function rankVerses(query: string, preferredSituation?: string): Array<{ 
     .map((verse) => {
       const verseText = `${verse.tags.join(" ")} ${verse.meaning} ${verse.guidance} ${verse.practicalAdvice.join(" ")}`;
       const verseTokens = new Set(expandTokens(tokenize(verseText)));
-      const matchedTags = Array.from(new Set([...tokens, ...situationTags])).filter((token) => verseTokens.has(token) || verse.tags.includes(token));
-      const directScore = tokens.reduce((total, token) => total + (verseTokens.has(token) || verse.tags.includes(token) ? 4 : 0), 0);
-      const situationScore = situationTags.reduce((total, tag) => total + (verse.tags.includes(tag) ? 3 : 0), 0);
+      const matchedTags = Array.from(new Set([...tokens, ...situationTags])).filter(
+        (token) => verseTokens.has(token) || verse.tags.includes(token)
+      );
+      const directScore = tokens.reduce(
+        (total, token) => total + (verseTokens.has(token) || verse.tags.includes(token) ? 4 : 0),
+        0
+      );
+      const situationScore = situationTags.reduce(
+        (total, tag) => total + (verse.tags.includes(tag) ? 3 : 0),
+        0
+      );
       const exactSituationBoost = situation !== "general" && verse.tags.includes(situation) ? 10 : 0;
       return {
         verse,
@@ -118,6 +164,21 @@ export function rankVerses(query: string, preferredSituation?: string): Array<{ 
 
 function personalOpening(query: string): string {
   const lower = query.toLowerCase();
+  if (/(happy|joy|grateful|bliss|peace|content)/.test(lower)) {
+    return "Beautiful heart, hold this peace like a sacred flame. Let gratitude deepen your roots while joy expands your wings.";
+  }
+  if (/(sad|cry|tears|grief|heartbroken|loss)/.test(lower)) {
+    return "Gentle soul, your tears are not weakness — they are love becoming visible. Let the heart feel, and then let the Divine carry what is too heavy.";
+  }
+  if (/(angry|anger|rage|frustrated|hate)/.test(lower)) {
+    return "Brave one, fire can forge or destroy. Pause before you speak, breathe before you act. The Gita asks you to lead your inner kingdom, not be ruled by it.";
+  }
+  if (/(lonely|alone|abandoned|isolated)/.test(lower)) {
+    return "My dear one, you are never truly alone. The Divine sits quietly in the chamber of every heart, waiting to be remembered.";
+  }
+  if (/(hopeless|worthless|useless|pointless|lost)/.test(lower)) {
+    return "Listen — no sincere effort on the path of dharma is ever wasted. Even in your darkest moment, you are more than what you feel right now.";
+  }
   if (/(exam|marks|college|study|student)/.test(lower)) {
     return "Beloved one, your worth is not the number written on a page. Let study become your offering, and let calm effort be your strength.";
   }
@@ -133,12 +194,20 @@ function personalOpening(query: string): string {
   return "My dear one, I hear the weight behind your question. Come closer to your own quiet center; wisdom is already waiting there.";
 }
 
-export function createGuidance(query: string, preferredSituation?: string): GuidanceResponse {
+// ─── Low-confidence threshold ─────────────────────────────────────────────────
+const MIN_CONFIDENCE = 0.55;
+
+export function createGuidance(
+  query: string,
+  preferredSituation?: string
+): GuidanceResponse & { isLowConfidence?: boolean } {
   const cleanQuery = query.replace(/\s+/g, " ").trim().slice(0, 1200);
   const ranked = rankVerses(cleanQuery, preferredSituation);
   const top = ranked[0];
   const situation = inferSituation(cleanQuery, preferredSituation);
-  const confidence = Math.min(0.98, Math.max(0.62, top.score / 38));
+  const rawConfidence = Math.min(0.98, Math.max(0.4, top.score / 38));
+  const confidence = rawConfidence;
+  const isLowConfidence = confidence < MIN_CONFIDENCE || top.matchedTags.length === 0;
   const opening = personalOpening(cleanQuery);
   const situationLine =
     situation === "general"
@@ -166,7 +235,8 @@ export function createGuidance(query: string, preferredSituation?: string): Guid
     practicalAdvice: top.verse.practicalAdvice,
     reflectionPrompt,
     audioScript,
-    matchedTags: top.matchedTags
+    matchedTags: top.matchedTags,
+    isLowConfidence
   };
 }
 

@@ -2,10 +2,7 @@
 .env
 .env.*
 !.env.example
-
-# Java / Maven
-backend/target/
-*.class
+!.env.local.example
 
 # Node / Next.js
 node_modules/
@@ -14,17 +11,21 @@ out/
 coverage/
 *.tsbuildinfo
 
-# Logs
-*.log
-logs/
-frontend/*.log
-frontend/qa-screenshots/
-geeta-ai/.next/
+# Krishna / Geeta AI generated files
 geeta-ai/node_modules/
+geeta-ai/.next/
+geeta-ai/out/
 geeta-ai/coverage/
 geeta-ai/qa-screenshots/
 geeta-ai/chrome-profile-*/
 geeta-ai/chrome-crash/
+
+# Local large media supplied outside Git
+geeta-ai/public/assets/user-media/*.mp3
+
+# Logs
+*.log
+logs/
 
 # OS / editor
 .DS_Store

@@ -1,4 +1,4 @@
-import type { Chapter, GitaVerse, SituationKey } from "./types";
+﻿import type { Chapter, GitaVerse, SituationKey } from "./types";
 
 export const situationMap: Record<SituationKey, { label: string; mantra: string; tags: string[] }> = {
   stress: {
@@ -504,7 +504,324 @@ export const gitaVerses: GitaVerse[] = [
     ],
     tags: ["action", "devotion", "career", "discipline", "growth", "success"],
     quote: "Divine guidance and human effort are meant to walk together."
+  },
+  {
+    id: "1-1",
+    chapter: 1,
+    chapterTitle: "Arjuna Vishada Yoga",
+    verse: "1",
+    sanskrit: "Dharmakshetre kurukshetre samavetaa yuyutsavah |",
+    transliteration: "Dharmakshetre kurukshetre samavetaa yuyutsavah",
+    meaning: "On the field of dharma, on the field of Kurukshetra, my sons and the sons of Pandu gathered, eager to fight.",
+    guidance: "Life itself is a Kurukshetra — a field where dharma and adharma face each other. Every decision is a battle. Choose dharma even when it is hard.",
+    practicalAdvice: [
+      "Identify what is dharmic and what is merely comfortable.",
+      "Approach life's challenges as a field of learning, not punishment.",
+      "Gather wisdom, patience, and courage before acting."
+    ],
+    tags: ["dharma","duty","courage","decision","purpose","conflict","battle"],
+    quote: "Life is a battlefield of dharma. Choose your side with clarity."
+  },
+  {
+    id: "1-47",
+    chapter: 1,
+    chapterTitle: "Arjuna Vishada Yoga",
+    verse: "47",
+    sanskrit: "Evam uktvaarjunah sankhye rathopastha upavishat |",
+    transliteration: "Evam uktva Arjunah sankhye rathopastha upavishat",
+    meaning: "Having spoken thus, Arjuna sank on the chariot seat, casting aside his bow and arrows, his mind overwhelmed with grief.",
+    guidance: "It is not weakness to feel overwhelmed. Arjuna — the greatest warrior — broke down before the battle. Grief is the beginning of questioning, and questioning is the beginning of wisdom.",
+    practicalAdvice: [
+      "Allow yourself to sit with grief without immediately trying to fix it.",
+      "Emotional breakdown can be the doorway to spiritual breakthrough.",
+      "Seek guidance — every Arjuna needs a Krishna in their chariot."
+    ],
+    tags: ["grief","confusion","overwhelmed","doubt","hopeless","support","surrender","sad"],
+    quote: "Collapse is not failure — it is the beginning of truth-seeking."
+  },
+  // ── Ch.2 extras
+  {
+    id: "2-13",
+    chapter: 2,
+    chapterTitle: "Sankhya Yoga",
+    verse: "13",
+    sanskrit: "Dehino asmin yatha dehe kaumaram yauvanam jara |",
+    transliteration: "Dehinosmin yatha dehe kaumaram yauvanam jara",
+    meaning: "Just as the soul passes through childhood, youth, and old age in this body, so it passes into another body at death.",
+    guidance: "You are not your current pain or chapter. The soul in you has moved through many seasons. This difficulty is one room — not the whole house.",
+    practicalAdvice: [
+      "When overwhelmed, remember: this phase is one season of a much longer journey.",
+      "Observe how much you have already changed — proof that change is possible.",
+      "Trust the soul's continuity; this hardship will not define your eternity."
+    ],
+    tags: ["identity","soul","change","hope","fear","grief","impermanence","hopeless"],
+    quote: "You are a soul changing rooms, not a person changing fate."
+  },
+  {
+    id: "2-19",
+    chapter: 2,
+    chapterTitle: "Sankhya Yoga",
+    verse: "19",
+    sanskrit: "Ya enam vetti hantaaram yashchainam manyate hatam |",
+    transliteration: "Ya enam vetti hantaram yashchainam manyate hatam",
+    meaning: "Those who think the soul is the slayer or the slain — both are mistaken. The soul neither kills nor can be killed.",
+    guidance: "Nothing truly essential can be destroyed. Your dignity, your capacity for growth — no failure or rejection can extinguish them. They are part of the indestructible self at your core.",
+    practicalAdvice: [
+      "When hurt by words, remind yourself: your true self cannot be diminished.",
+      "Stop counting your worth by your last mistake or rejection.",
+      "Protect your inner flame — it is eternal."
+    ],
+    tags: ["self-worth","identity","fear","grief","resilience","soul","courage","hopeless","worthless"],
+    quote: "Your true self is untouchable by failure, loss, or opinion."
+  },
+  {
+    id: "2-70",
+    chapter: 2,
+    chapterTitle: "Sankhya Yoga",
+    verse: "70",
+    sanskrit: "Aapuryamanam acalapratistham samudram aapah pravisanti yadvat |",
+    transliteration: "Apuryamanam achala-pratistham samudram apah pravishanti yadvat",
+    meaning: "As the ocean remains undisturbed when waters flow into it, the person of steady wisdom remains undisturbed when desires enter — they attain peace.",
+    guidance: "Be the ocean, not the wave. Let feelings, impulses, praise, and criticism flow in — without losing your stillness. The deepest life holds everything without being swept away.",
+    practicalAdvice: [
+      "Practice observing a desire for 3 breaths before acting.",
+      "Track energy spent chasing short-term comfort vs long-term peace.",
+      "Feel everything, be moved by nothing against your dharma."
+    ],
+    tags: ["peace","desire","discipline","impulse","mind","stillness","self-control","focus","calm","anxiety","overwhelmed"],
+    quote: "The steady one holds ocean's calm while all rivers rush in."
+  },
+  // ── Ch.3 extras
+  {
+    id: "3-8",
+    chapter: 3,
+    chapterTitle: "Karma Yoga",
+    verse: "8",
+    sanskrit: "Niyatam kuru karma tvam karma jyaayo hyakarmanah |",
+    transliteration: "Niyatam kuru karma tvam karma jyayo hyakarmanah",
+    meaning: "Perform your prescribed duty, for action is better than inaction. Even maintaining your body would not be possible without action.",
+    guidance: "Inaction is a choice with its own consequences. When paralysed by doubt, start with the smallest duty in front of you. Motion creates momentum. Begin.",
+    practicalAdvice: [
+      "List one duty you have been avoiding — take the first small step today.",
+      "Do not wait for certainty; start with the next right action.",
+      "Your present duties are your current practice of dharma."
+    ],
+    tags: ["action","discipline","duty","procrastination","lazy","career","habit","routine","motivated","bored"],
+    quote: "Even lifting one hand in duty is greater than standing still in fear."
+  },
+  {
+    id: "3-27",
+    chapter: 3,
+    chapterTitle: "Karma Yoga",
+    verse: "27",
+    sanskrit: "Prakrityaiva cha karmaani kriyamaanaani sarvashah |",
+    transliteration: "Prakrityaiva cha karmaani kriyamaanaani sarvashah",
+    meaning: "All actions are performed by the three modes of nature. The deluded, thinking themselves the doer, take false ownership.",
+    guidance: "You are the channel, not the source. When you do good, grace works through you. When you struggle, the modes of nature are at play. This removes crushing ego — not responsibility.",
+    practicalAdvice: [
+      "When pride inflates from your success, return to gratitude instead.",
+      "When you fail, recognize tamas — and consciously invoke sattva.",
+      "Dedicate your actions to something larger than personal gain."
+    ],
+    tags: ["ego","action","karma","discipline","comparison","identity","surrender","gratitude"],
+    quote: "The wise work through nature without the illusion of being the doer."
+  },
+  // ── Ch.4 extras
+  {
+    id: "4-7",
+    chapter: 4,
+    chapterTitle: "Jnana Karma Sannyasa Yoga",
+    verse: "7",
+    sanskrit: "Yada yada hi dharmasya glanir bhavati bharata |",
+    transliteration: "Yada yada hi dharmasya glanir bhavati bharata",
+    meaning: "Whenever and wherever there is a decline in righteousness, at that time I manifest Myself.",
+    guidance: "When the world feels broken, know the Divine is already responding. You may be the vessel through which dharma is restored in your corner. Act from integrity today.",
+    practicalAdvice: [
+      "Be the one who holds the standard of dharma in your family or workplace.",
+      "Do not wait for conditions to improve; become the condition of improvement.",
+      "One honest act in a corrupt environment is a form of divine restoration."
+    ],
+    tags: ["dharma","purpose","courage","duty","faith","hope","positive","action","justice"],
+    quote: "When dharma declines, the Divine does not stay absent — and neither should you."
+  },
+  {
+    id: "4-38",
+    chapter: 4,
+    chapterTitle: "Jnana Karma Sannyasa Yoga",
+    verse: "38",
+    sanskrit: "Na hi jnanena sadrisham pavitram iha vidyate |",
+    transliteration: "Na hi jnanena sadrisham pavitram iha vidyate",
+    meaning: "There is nothing in this world as purifying as spiritual knowledge. One perfected in yoga finds this knowledge within in due time.",
+    guidance: "Every hardship purifies you through experience. The pain of growth is wisdom being born. Keep showing up for truth. The knowledge that transforms is already inside you, waiting to be uncovered.",
+    practicalAdvice: [
+      "Set aside 15 minutes daily for reading, reflection, or journaling.",
+      "Your lived experience is a sacred text — what has it taught you this week?",
+      "Seek understanding more than comfort; clarity will follow courage."
+    ],
+    tags: ["knowledge","wisdom","study","growth","discipline","meditation","confusion","purpose","identity"],
+    quote: "Knowledge is the greatest purifier — nothing in the world can match it."
+  },
+  // ── Ch.6 extra
+  {
+    id: "6-6",
+    chapter: 6,
+    chapterTitle: "Dhyana Yoga",
+    verse: "6",
+    sanskrit: "Bandhuraatmaa aatmanas tasya yenaatmaivaa atmanaa jitah |",
+    transliteration: "Bandhur atma atmanastasya yenaatmaivatmana jitah",
+    meaning: "For one who has conquered the mind, the mind is the best of friends. For one who has failed, the mind is the greatest enemy.",
+    guidance: "The mind left untrained becomes a tyrant — it catastrophizes, compares, and creates suffering. That same mind, disciplined through practice, becomes your greatest protector. Choose which version you live with.",
+    practicalAdvice: [
+      "When anxious, name what the mind is doing: I notice I am predicting catastrophe.",
+      "Establish a simple daily anchor: breath, mantra, or journaling.",
+      "Every calm response chosen over reaction is winning the inner war."
+    ],
+    tags: ["mind","anxiety","overthinking","focus","meditation","discipline","self-control","peace","stress","angry","frustrated"],
+    quote: "The mind is your best friend or your worst enemy — your training decides."
+  },
+  // ── Ch.9 extras
+  {
+    id: "9-22",
+    chapter: 9,
+    chapterTitle: "Raja Vidya Raja Guhya Yoga",
+    verse: "22",
+    sanskrit: "Ananyaas chintayanto maam ye janaah paryupaasate |",
+    transliteration: "Ananyash chintayanto maam ye janah paryupasate",
+    meaning: "For those who worship Me with devotion, I carry what they lack and preserve what they have.",
+    guidance: "You are not navigating this life alone. When you turn toward the Divine sincerely — even in confusion — there is a response. What you lack will be carried. What you built in dharma will be protected.",
+    practicalAdvice: [
+      "Start your day surrendering one worry to the Divine.",
+      "Notice where grace has already worked even without your asking.",
+      "Devotion does not require perfection — it requires direction."
+    ],
+    tags: ["faith","devotion","support","loneliness","hope","surrender","gratitude","love","lonely","hopeless"],
+    quote: "To those who remember Me with whole hearts, I become their supply and their shield."
+  },
+  {
+    id: "9-26",
+    chapter: 9,
+    chapterTitle: "Raja Vidya Raja Guhya Yoga",
+    verse: "26",
+    sanskrit: "Patram pushpam phalam toyam yo me bhaktyaa prayachchhati |",
+    transliteration: "Patram pushpam phalam toyam yo me bhaktya prayachchhati",
+    meaning: "If one offers Me with love a leaf, a flower, a fruit, or even water — I accept it.",
+    guidance: "You do not have to be rich, successful, or spiritually perfect for the Divine to accept you. The quality that matters is love — sincere, humble, whole. Offer whatever you have today. It is received.",
+    practicalAdvice: [
+      "Today, offer one small act of kindness or beauty to the Divine.",
+      "Stop waiting until your life is good enough to return to spiritual practice.",
+      "Simplicity given with love outweighs grandeur given with ego."
+    ],
+    tags: ["devotion","gratitude","faith","love","surrender","hopeless","support","peace","happy","grateful"],
+    quote: "A leaf offered in love is accepted. No offering of the heart is ever too small."
+  },
+  // ── Ch.12 extra
+  {
+    id: "12-13",
+    chapter: 12,
+    chapterTitle: "Bhakti Yoga",
+    verse: "13",
+    sanskrit: "Adveshta sarvabhutanam maitrah karuna eva cha |",
+    transliteration: "Adveshta sarvabhutanam maitrah karuna eva cha",
+    meaning: "One who is not hateful toward any being, friendly and compassionate, free from ego — such a devotee is very dear to Me.",
+    guidance: "True spiritual maturity is measured in compassion. The moment you stop wishing harm to anyone, even those who hurt you, you step into divine nature. Practice this daily.",
+    practicalAdvice: [
+      "Choose one person who wronged you and understand their pain — don't justify their action.",
+      "Before sleeping: did I wish ill to anyone? Replace it with one moment of compassion.",
+      "Friendliness is not weakness — it is the hardest spiritual discipline."
+    ],
+    tags: ["compassion","anger","hate","relationship","ego","love","devotion","peace","forgiveness","angry","jealous","envy"],
+    quote: "The one who holds no hatred for any living being is dearest to Me."
+  },
+  // ── Ch.14 extra
+  {
+    id: "14-6",
+    chapter: 14,
+    chapterTitle: "Gunatraya Vibhaga Yoga",
+    verse: "6",
+    sanskrit: "Tatra sattvam nirmalatvaat prakaashakam anaamayam |",
+    transliteration: "Tatra sattvam nirmalatvaat prakaashakam anamayam",
+    meaning: "Among these, sattva, being pure, is illuminating and free from reactions. It binds through attachment to happiness and knowledge.",
+    guidance: "Even your drive for goodness can become a trap if it feeds pride. True sattvic clarity is humble — it illuminates without judging, grows without boasting. Examine which guna drives your current choices.",
+    practicalAdvice: [
+      "When proud of discipline or knowledge, ask: am I serving, or performing?",
+      "Cultivate sattva through clean food, honest speech, and calm company.",
+      "Notice when agitation masks itself as motivation."
+    ],
+    tags: ["discipline","ego","mind","clarity","growth","purpose","meditation","self-control","identity","comparison"],
+    quote: "Even light, when grasped with pride, becomes a cage. Let clarity flow freely."
+  },
+  // ── Ch.16
+  {
+    id: "16-1",
+    chapter: 16,
+    chapterTitle: "Daivasura Sampad Vibhaga Yoga",
+    verse: "1",
+    sanskrit: "Abhayam sattvasamsuddhih jnanayogavyavasthitih |",
+    transliteration: "Abhayam sattva-samshuddhir jnana-yoga-vyavasthitih",
+    meaning: "Fearlessness, purity of heart, steadfastness in knowledge and yoga — these are divine qualities.",
+    guidance: "You carry seeds of the divine. Fearlessness is the first quality Krishna lists — not feeling no fear, but not letting fear choose your actions. Sattva purifies the vessel; knowledge steadies it; courage activates it.",
+    practicalAdvice: [
+      "Name one fear you have been avoiding — take one small fearless action today.",
+      "Practice honesty even when uncomfortable; this is sattva-samshuddhi.",
+      "Give without expecting return — this weakens ego."
+    ],
+    tags: ["courage","fear","dharma","discipline","self-control","purpose","growth","action","positive","motivated","scared"],
+    quote: "Fearlessness is the first divine quality. All others grow from that root."
+  },
+  // ── Ch.17
+  {
+    id: "17-3",
+    chapter: 17,
+    chapterTitle: "Shraddhatraya Vibhaga Yoga",
+    verse: "3",
+    sanskrit: "Sattvaanuroopaa sarvasya shraddha bhavati bhaarata |",
+    transliteration: "Sattvanuroopa sarvasya shraddha bhavati bharata",
+    meaning: "The faith of every individual is in accordance with their nature. A person is what their faith is.",
+    guidance: "What you consistently believe, you become. Upgrade your faith deliberately — through truthful encounters with evidence that things can change.",
+    practicalAdvice: [
+      "Write three core beliefs about yourself — are they sattvic or limiting?",
+      "Replace I cannot with I have not yet learned how to.",
+      "Surround yourself with those whose faith in goodness is contagious."
+    ],
+    tags: ["identity","belief","self-worth","hope","purpose","growth","faith","positive","happy","excited"],
+    quote: "You are made of your faith. Choose what you believe with intention."
+  },
+  // ── Ch.18 extras
+  {
+    id: "18-20",
+    chapter: 18,
+    chapterTitle: "Moksha Sannyasa Yoga",
+    verse: "20",
+    sanskrit: "Sarvabhuteshu yenaikam bhaavam avyayam eekshate |",
+    transliteration: "Sarvabhuteshu yenaikam bhavam avyayam ikshate",
+    meaning: "That knowledge by which one sees one undivided imperishable reality in all beings — that is in the mode of goodness.",
+    guidance: "The person who sees the same divine essence in every being — the successful and struggling alike — has transcended comparison and ego. This vision is both wisdom and liberation.",
+    practicalAdvice: [
+      "Look at someone who irritates you: what divine spark struggles in them?",
+      "Stop dividing the world into people like me and others — the Gita sees one life everywhere.",
+      "The most radical kindness is recognising yourself in the one you least want to."
+    ],
+    tags: ["compassion","ego","comparison","identity","wisdom","love","peace","devotion","jealous","lonely","envy"],
+    quote: "Seeing the indestructible reality in all beings — that vision is the highest knowledge."
+  },
+  {
+    id: "18-65",
+    chapter: 18,
+    chapterTitle: "Moksha Sannyasa Yoga",
+    verse: "65",
+    sanskrit: "Manmanaa bhava madbhakto madyaajee maam namaskuru |",
+    transliteration: "Manmana bhava madbhakto madyaji mam namaskuru",
+    meaning: "Fix your mind on Me, be devoted to Me, worship Me, bow down to Me. So shall you come to Me. I promise you truly, for you are dear to Me.",
+    guidance: "This is Krishna's personal promise — not a general statement, but a direct pledge: you are dear to Me. Place your mind, your mornings, your anxieties, your hopes toward the Divine. The path home is always open.",
+    practicalAdvice: [
+      "Begin and end each day with one sincere thought directed to the Divine.",
+      "When the mind wanders into fear, ask: where is the sacred in this?",
+      "Devotion is not performance. It is the faithful return, again and again, to what is true."
+    ],
+    tags: ["devotion","faith","love","surrender","meditation","peace","loneliness","hope","gratitude","happy","grateful","lonely"],
+    quote: "Fix your mind on Me — you are dear to Me. The door home is always open."
   }
+
 ];
 
 const chapterTitles = [

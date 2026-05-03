@@ -10,11 +10,9 @@ import {
   Flame,
   Heart,
   Loader2,
-  Mail,
   Menu,
   Moon,
   Pause,
-  Phone,
   Play,
   Save,
   Send,
@@ -24,7 +22,6 @@ import {
   Timer,
   User,
   Volume2,
-  VolumeX,
   Wind,
   X
 } from "lucide-react";
@@ -40,23 +37,21 @@ const navItems = [
   { href: "#meditation", label: "Meditation" },
   { href: "#growth", label: "Growth" },
   { href: "#feedback", label: "Feedback" },
-  { href: "#contact", label: "Contact" },
-  { href: "#profile", label: "Profile" }
+  { href: "#profile", label: "Profile" },
+  { href: "#quiz", label: "Quiz" }
 ];
 
 const moodLabels = ["Heavy", "Low", "Steady", "Light", "Radiant"];
 
 type ProfileForm = {
-  name: string;
-  email: string;
   preferences: string;
 };
 
 const defaultProfile: ProfileForm = {
-  name: "",
-  email: "",
   preferences: "Calm guidance, slower voice, OM ambience."
 };
+
+type MediaStatus = "idle" | "ready" | "playing" | "paused" | "blocked" | "error";
 
 function readStoredArray<T>(key: string): T[] {
   if (typeof window === "undefined") {
@@ -119,88 +114,66 @@ function useSacredAudio({
   omVolume: number;
   fluteVolume: number;
 }) {
-  const audioRef = useRef<{
-    context: AudioContext;
-    omGain: GainNode;
-    fluteGain: GainNode;
-    nodes: AudioNode[];
-  } | null>(null);
+  const omRef = useRef<HTMLAudioElement | null>(null);
+  const fluteRef = useRef<HTMLAudioElement | null>(null);
+  const [omStatus, setOmStatus] = useState<MediaStatus>("idle");
+  const [fluteStatus, setFluteStatus] = useState<MediaStatus>("idle");
 
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return undefined;
+    if (typeof window === "undefined") return undefined;
+
+    // ⚠️ Do NOT set crossOrigin="anonymous" for same-origin files —
+    // it triggers a CORS preflight and causes MEDIA_ERR_SRC_NOT_SUPPORTED
+    function createTrack(src: string, onStatus: (s: MediaStatus) => void) {
+      const audio = new Audio(src);
+      audio.loop = true;
+      audio.preload = "metadata";
+      const markReady = () => onStatus("ready");
+      const markError = () => onStatus("error");
+      audio.addEventListener("canplay", markReady);
+      audio.addEventListener("error", markError);
+      return { audio, markReady, markError };
     }
 
-    const AudioContextClass =
-      window.AudioContext ||
-      (window as Window & typeof globalThis & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!AudioContextClass) {
-      return undefined;
-    }
-    const context = new AudioContextClass();
-    const omGain = context.createGain();
-    const fluteGain = context.createGain();
-    const omOsc = context.createOscillator();
-    const omLow = context.createOscillator();
-    const fluteOsc = context.createOscillator();
-    const fluteLfo = context.createOscillator();
-    const fluteLfoGain = context.createGain();
-
-    omOsc.type = "sine";
-    omOsc.frequency.value = 136.1;
-    omLow.type = "sine";
-    omLow.frequency.value = 68.05;
-    fluteOsc.type = "triangle";
-    fluteOsc.frequency.value = 523.25;
-    fluteLfo.frequency.value = 0.18;
-    fluteLfoGain.gain.value = 18;
-    omGain.gain.value = 0;
-    fluteGain.gain.value = 0;
-
-    fluteLfo.connect(fluteLfoGain);
-    fluteLfoGain.connect(fluteOsc.frequency);
-    omOsc.connect(omGain);
-    omLow.connect(omGain);
-    fluteOsc.connect(fluteGain);
-    omGain.connect(context.destination);
-    fluteGain.connect(context.destination);
-    omOsc.start();
-    omLow.start();
-    fluteOsc.start();
-    fluteLfo.start();
-
-    audioRef.current = {
-      context,
-      omGain,
-      fluteGain,
-      nodes: [omOsc, omLow, fluteOsc, fluteLfo]
-    };
+    const om = createTrack("/assets/user-media/om-108.mp3", setOmStatus);
+    const flute = createTrack("/assets/user-media/krishna-flute.mp3", setFluteStatus);
+    omRef.current = om.audio;
+    fluteRef.current = flute.audio;
 
     return () => {
-      audioRef.current = null;
-      void context.close();
+      om.audio.pause();
+      flute.audio.pause();
+      om.audio.removeEventListener("canplay", om.markReady);
+      om.audio.removeEventListener("error", om.markError);
+      flute.audio.removeEventListener("canplay", flute.markReady);
+      flute.audio.removeEventListener("error", flute.markError);
+      omRef.current = null;
+      fluteRef.current = null;
     };
   }, []);
 
   useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) {
-      return;
+    async function syncTrack(
+      audio: HTMLAudioElement | null,
+      enabled: boolean,
+      volume: number,
+      onStatus: (s: MediaStatus) => void
+    ) {
+      if (!audio) { onStatus("error"); return; }
+      audio.volume = Math.max(0, Math.min(volume, 1));
+      if (!enabled) { audio.pause(); onStatus("paused"); return; }
+      try {
+        await audio.play();
+        onStatus("playing");
+      } catch {
+        onStatus("blocked");
+      }
     }
-
-    const now = audio.context.currentTime;
-    const nextOmVolume = omEnabled ? Math.max(0, Math.min(omVolume, 1)) : 0;
-    const nextFluteVolume = fluteEnabled ? Math.max(0, Math.min(fluteVolume, 1)) : 0;
-
-    if (omEnabled || fluteEnabled) {
-      void audio.context.resume().catch(() => undefined);
-    }
-
-    audio.omGain.gain.cancelScheduledValues(now);
-    audio.fluteGain.gain.cancelScheduledValues(now);
-    audio.omGain.gain.linearRampToValueAtTime(nextOmVolume * 0.18, now + 0.4);
-    audio.fluteGain.gain.linearRampToValueAtTime(nextFluteVolume * 0.12, now + 0.4);
+    void syncTrack(omRef.current, omEnabled, omVolume, setOmStatus);
+    void syncTrack(fluteRef.current, fluteEnabled, fluteVolume, setFluteStatus);
   }, [fluteEnabled, fluteVolume, omEnabled, omVolume]);
+
+  return { fluteStatus, omStatus };
 }
 
 function SectionHeading({
@@ -278,6 +251,7 @@ function AudioController({
   description,
   enabled,
   volume,
+  status,
   icon,
   onToggle,
   onVolumeChange,
@@ -287,22 +261,43 @@ function AudioController({
   description: string;
   enabled: boolean;
   volume: number;
+  status: MediaStatus;
   icon: ReactNode;
   onToggle: () => void;
   onVolumeChange: (value: number) => void;
   testId: string;
 }) {
+  const statusLabel: Record<MediaStatus, string> = {
+    blocked: "Tap Play",
+    error: "Unavailable",
+    idle: "Ready",
+    paused: "Paused",
+    playing: "Playing",
+    ready: "Ready"
+  };
+
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.045] p-4 shadow-[0_14px_38px_rgba(0,0,0,0.18)]" data-testid={testId}>
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-center gap-3">
           <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-antique/18 bg-antique/10 text-antique">{icon}</div>
           <div className="min-w-0">
-            <h3 className="text-base font-semibold text-white">{title}</h3>
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-base font-semibold text-white">{title}</h3>
+              <span className={`rounded-full px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] ${
+                status === "error"
+                  ? "border border-red-300/25 bg-red-500/10 text-red-100"
+                  : status === "playing"
+                    ? "border border-peacock/25 bg-peacock/10 text-peacock"
+                    : "border border-white/10 bg-white/[0.05] text-white/50"
+              }`}>
+                {statusLabel[status]}
+              </span>
+            </div>
             <p className="mt-1 text-sm leading-6 text-white/58">{description}</p>
           </div>
         </div>
-        <DivineButton onClick={onToggle} testId={`${testId}-toggle`} variant={enabled ? "primary" : "ghost"}>
+        <DivineButton className="w-full sm:w-auto" onClick={onToggle} testId={`${testId}-toggle`} variant={enabled ? "primary" : "ghost"}>
           {enabled ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
           {enabled ? "Pause" : "Play"}
         </DivineButton>
@@ -317,6 +312,7 @@ function AudioController({
           data-testid={`${testId}-volume`}
           max={1}
           min={0}
+          disabled={status === "error"}
           onChange={(event) => onVolumeChange(Number(event.target.value))}
           step={0.05}
           type="range"
@@ -336,79 +332,106 @@ function AvatarStage({
 }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isVideoPlaying, setIsVideoPlaying] = useState(true);
+  // Always start muted — required by all modern browsers for autoPlay
   const [avatarMuted, setAvatarMuted] = useState(true);
+  const [videoError, setVideoError] = useState(false);
 
+  // Sync play/pause only — keep muted separate to avoid re-triggering play
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) {
-      return;
-    }
-
+    if (!video || videoError) return;
     video.playbackRate = 0.75;
-    video.muted = avatarMuted;
-
     if (isVideoPlaying) {
       void video.play().catch(() => setIsVideoPlaying(false));
     } else {
       video.pause();
     }
-  }, [avatarMuted, isVideoPlaying]);
+  }, [isVideoPlaying, videoError]);
 
-  function toggleVideoPlayback() {
-    setIsVideoPlaying((current) => !current);
-  }
+  // Sync mute state without restarting video
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video) video.muted = avatarMuted;
+  }, [avatarMuted]);
 
   return (
-    <div className="glass-card krishna-card relative min-h-[460px] overflow-hidden rounded-[1.75rem] p-5" data-reveal>
+    <div className="glass-card krishna-card relative overflow-hidden rounded-[1.75rem] p-4 sm:p-5" data-reveal>
       <div className="absolute inset-0">
         <img alt="" className="h-full w-full object-cover opacity-28" src="/krishna-bg.jpg" />
         <div className="absolute inset-0 bg-gradient-to-b from-night/28 via-night/54 to-night/95" />
       </div>
 
-      <div className="relative z-10 flex h-full min-h-[420px] flex-col justify-between">
-        <div className="flex items-center justify-between gap-3">
+      <div className="relative z-10 flex min-h-full flex-col gap-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-antique/75">Speaking Avatar</p>
             <h3 className="mt-2 text-2xl font-semibold text-white">Krishna Guidance Presence</h3>
           </div>
-          <span className="rounded-full border border-peacock/30 bg-peacock/10 px-3 py-1 text-xs font-semibold text-peacock">
+          <span className="rounded-full border border-peacock/30 bg-peacock/10 px-3 py-1 text-xs font-semibold text-peacock self-start">
             {isSpeaking ? "Speaking softly" : "Looping presence"}
           </span>
         </div>
 
-        <div className="hero-section relative h-screen w-screen overflow-hidden">
-          <img alt="" className="absolute inset-0 h-full w-full object-cover" src="/krishna-bg.jpg" />
-          <div className="absolute inset-0 bg-gradient-to-b from-night/40 via-night/60 to-night/80" />
-          
-          <div className="video-container absolute top-[5%] left-[5%] h-[90%] w-[90%] overflow-hidden rounded-[20px] border border-antique/30 z-10">
+        <div
+          className="avatar-stage-media relative min-h-[420px] overflow-hidden rounded-2xl border border-antique/24 bg-black/35 sm:min-h-[520px] xl:min-h-[640px]"
+          data-testid="avatar-video-container"
+        >
+          <img alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover opacity-55" src="/krishna-bg.jpg" />
+          <div className="absolute inset-0 bg-gradient-to-b from-night/36 via-night/48 to-night/88" />
+
+          <div className="absolute inset-[3%] overflow-hidden rounded-2xl border border-antique/30 bg-night/70 shadow-[0_30px_80px_rgba(0,0,0,0.5)]">
+            {videoError ? (
+              <div className="absolute inset-0 z-10 grid place-items-center bg-night/80 p-6 text-center">
+                <div>
+                  <Sparkles className="mx-auto h-10 w-10 text-antique" />
+                  <p className="mt-4 text-lg font-semibold text-white">Avatar video unavailable</p>
+                  <p className="mt-2 max-w-sm text-sm leading-6 text-white/62">Place krishna-avatar.mp4 in public/assets/user-media/ and refresh.</p>
+                  <img
+                    alt="Krishna avatar fallback"
+                    className="mx-auto mt-4 h-48 w-48 rounded-full object-cover opacity-80"
+                    src="/assets/user-media/krishna-face-flute.jpg"
+                  />
+                </div>
+              </div>
+            ) : null}
             <video
               ref={videoRef}
-              aria-label="Looping Krishna avatar video"
+              aria-label="Looping Krishna avatar presence"
               autoPlay
-              className="avatar-video"
+              className="avatar-video h-full w-full object-cover"
               data-testid="avatar-video"
               loop
-              muted={avatarMuted}
+              muted
+              onCanPlay={() => setVideoError(false)}
+              onError={() => {
+                setVideoError(true);
+                setIsVideoPlaying(false);
+              }}
               playsInline
               poster="/assets/user-media/krishna-face-flute.jpg"
+              preload="auto"
               src="/assets/user-media/krishna-avatar.mp4"
             />
             <div className="avatar-eye-reflection pointer-events-none absolute inset-0" />
             <div className="pointer-events-none absolute inset-0 rounded-2xl bg-[linear-gradient(180deg,rgba(255,255,255,0.08),transparent_32%,rgba(5,2,13,0.28))]" />
           </div>
 
-          <div className="overlay-content absolute bottom-10 left-10 z-20 text-white">
-            <div className="flex gap-2">
+          <div className="absolute inset-x-4 bottom-4 z-20 sm:inset-x-8 sm:bottom-8">
+            <div className="flex flex-wrap gap-2">
               <button
-                className="rounded-lg px-4 py-2 text-sm font-semibold transition bg-antique text-night hover:bg-antique/80"
-                onClick={toggleVideoPlayback}
+                className="rounded-lg bg-antique px-4 py-2 text-sm font-semibold text-night transition hover:bg-[#ffe2a0] disabled:opacity-50"
+                data-testid="avatar-playback-toggle"
+                disabled={videoError}
+                onClick={() => setIsVideoPlaying((c) => !c)}
                 type="button"
               >
-                {isVideoPlaying ? "Pause Avatar" : "Play Avatar"}
+                {isVideoPlaying ? "Pause" : "Play"}
               </button>
               <button
-                className="rounded-lg px-4 py-2 text-sm font-semibold transition border border-white/30 text-white hover:border-antique hover:text-antique"
-                onClick={() => setAvatarMuted((current) => !current)}
+                className="rounded-lg border border-white/30 px-4 py-2 text-sm font-semibold text-white transition hover:border-antique hover:text-antique disabled:opacity-50"
+                data-testid="avatar-mute-toggle"
+                disabled={videoError}
+                onClick={() => setAvatarMuted((c) => !c)}
                 type="button"
               >
                 {avatarMuted ? "Unmute" : "Mute"}
@@ -903,13 +926,20 @@ function MeditationModal({
 }
 
 function GrowthSystem() {
-  const [entries, setEntries] = useState<GrowthEntry[]>(() => readStoredArray<GrowthEntry>("krishna-ai-growth"));
+  const [mounted, setMounted] = useState(false);
+  const [entries, setEntries] = useState<GrowthEntry[]>([]);
   const [moodBefore, setMoodBefore] = useState(3);
   const [moodAfter, setMoodAfter] = useState(4);
   const [minutes, setMinutes] = useState(5);
   const [reflection, setReflection] = useState("");
   const [lesson, setLesson] = useState("");
-  const [now] = useState(() => Date.now());
+  const [now, setNow] = useState(0);
+
+  useEffect(() => {
+    setEntries(readStoredArray<GrowthEntry>("krishna-ai-growth"));
+    setNow(Date.now());
+    setMounted(true);
+  }, []);
 
   function saveEntry(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -997,15 +1027,21 @@ function GrowthSystem() {
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="rounded-2xl border border-white/10 bg-white/[0.045] p-4">
               <p className="text-xs uppercase tracking-[0.22em] text-white/44">Entries</p>
-              <p className="mt-2 text-3xl font-semibold text-antique">{weekly.count}</p>
+              <p className="mt-2 text-3xl font-semibold text-antique" suppressHydrationWarning>
+                {mounted ? weekly.count : "—"}
+              </p>
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/[0.045] p-4">
               <p className="text-xs uppercase tracking-[0.22em] text-white/44">Meditation</p>
-              <p className="mt-2 text-3xl font-semibold text-antique">{weekly.meditation}m</p>
+              <p className="mt-2 text-3xl font-semibold text-antique" suppressHydrationWarning>
+                {mounted ? `${weekly.meditation}m` : "—"}
+              </p>
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/[0.045] p-4">
               <p className="text-xs uppercase tracking-[0.22em] text-white/44">Mood Lift</p>
-              <p className="mt-2 text-3xl font-semibold text-antique">+{weekly.uplift}</p>
+              <p className="mt-2 text-3xl font-semibold text-antique" suppressHydrationWarning>
+                {mounted ? `+${weekly.uplift}` : "—"}
+              </p>
             </div>
           </div>
 
@@ -1063,15 +1099,17 @@ function FeedbackSection() {
             />
           </label>
           <label className="block">
-            <span className="text-xs font-semibold uppercase tracking-[0.22em] text-white/48">Email</span>
-            <input
+            <span className="text-xs font-semibold uppercase tracking-[0.22em] text-white/48">Topic</span>
+            <select
               className="mt-2 w-full rounded-2xl border border-white/10 bg-night/62 p-4 text-sm text-white outline-none transition placeholder:text-white/36 focus:border-antique focus:ring-4 focus:ring-antique/10"
-              maxLength={120}
-              name="email"
-              placeholder="you@example.com"
-              required
-              type="email"
-            />
+              defaultValue="experience"
+              name="topic"
+            >
+              <option value="experience">Experience</option>
+              <option value="audio">Audio</option>
+              <option value="video">Video</option>
+              <option value="guidance">Guidance</option>
+            </select>
           </label>
         </div>
         <label className="mt-4 block">
@@ -1100,42 +1138,6 @@ function FeedbackSection() {
   );
 }
 
-function ContactSection() {
-  return (
-    <section className="relative z-10 px-4 py-16" id="contact">
-      <SectionHeading
-        copy="Use these details for project review, support notes, and collaboration conversations."
-        eyebrow="Contact Us"
-        title="A Clear Way To Reach The Team"
-      />
-      <div className="mx-auto grid max-w-5xl gap-4 md:grid-cols-3">
-        <a className="glass-card krishna-card rounded-[1.5rem] p-5" data-reveal href="mailto:hello@krishnaai.app">
-          <Mail className="mb-5 h-6 w-6 text-antique" />
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/46">Email</p>
-          <p className="mt-2 break-words text-lg font-semibold text-white">hello@krishnaai.app</p>
-        </a>
-        <div className="glass-card krishna-card rounded-[1.5rem] p-5" data-reveal>
-          <Phone className="mb-5 h-6 w-6 text-antique" />
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/46">Phone</p>
-          <p className="mt-2 text-lg font-semibold text-white">+91 98765 43210</p>
-        </div>
-        <div className="glass-card krishna-card rounded-[1.5rem] p-5" data-reveal>
-          <Share2 className="mb-5 h-6 w-6 text-antique" />
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/46">Social</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <a className="rounded-full border border-white/12 bg-white/[0.05] px-3 py-2 text-sm font-semibold text-white/72 hover:border-antique/45 hover:text-antique" href="https://www.instagram.com/" rel="noopener noreferrer" target="_blank">
-              Instagram
-            </a>
-            <a className="rounded-full border border-white/12 bg-white/[0.05] px-3 py-2 text-sm font-semibold text-white/72 hover:border-antique/45 hover:text-antique" href="https://www.youtube.com/" rel="noopener noreferrer" target="_blank">
-              YouTube
-            </a>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function ProfileSection() {
   const [profile, setProfile] = useState<ProfileForm>(() => readStoredProfile());
   const [saved, setSaved] = useState(false);
@@ -1149,9 +1151,9 @@ function ProfileSection() {
   return (
     <section className="relative z-10 px-4 py-16" id="profile">
       <SectionHeading
-        copy="Keep simple local preferences so the experience can feel more personal during demos and continued use."
+        copy="Keep only non-sensitive local preferences so the experience can feel calmer and more personal during continued use."
         eyebrow="Profile"
-        title="Your Guidance Preferences"
+        title="Experience Preferences"
       />
       <form className="glass-card krishna-card mx-auto max-w-4xl rounded-[1.75rem] p-6" data-reveal data-testid="profile-form" onSubmit={saveProfile}>
         <div className="mb-6 flex items-center gap-3">
@@ -1159,34 +1161,11 @@ function ProfileSection() {
             <User className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="text-xl font-semibold text-white">Personal Profile</h3>
-            <p className="mt-1 text-sm text-white/58">Saved locally in this browser.</p>
+            <h3 className="text-xl font-semibold text-white">Guidance Style</h3>
+            <p className="mt-1 text-sm text-white/58">Saved locally without contact details.</p>
           </div>
         </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          <label className="block">
-            <span className="text-xs font-semibold uppercase tracking-[0.22em] text-white/48">Name</span>
-            <input
-              className="mt-2 w-full rounded-2xl border border-white/10 bg-night/62 p-4 text-sm text-white outline-none transition placeholder:text-white/36 focus:border-antique focus:ring-4 focus:ring-antique/10"
-              maxLength={80}
-              onChange={(event) => setProfile((current) => ({ ...current, name: event.target.value }))}
-              placeholder="Your name"
-              value={profile.name}
-            />
-          </label>
-          <label className="block">
-            <span className="text-xs font-semibold uppercase tracking-[0.22em] text-white/48">Email</span>
-            <input
-              className="mt-2 w-full rounded-2xl border border-white/10 bg-night/62 p-4 text-sm text-white outline-none transition placeholder:text-white/36 focus:border-antique focus:ring-4 focus:ring-antique/10"
-              maxLength={120}
-              onChange={(event) => setProfile((current) => ({ ...current, email: event.target.value }))}
-              placeholder="you@example.com"
-              type="email"
-              value={profile.email}
-            />
-          </label>
-        </div>
-        <label className="mt-4 block">
+        <label className="block">
           <span className="text-xs font-semibold uppercase tracking-[0.22em] text-white/48">Preferences</span>
           <textarea
             className="mt-2 min-h-32 w-full resize-y rounded-2xl border border-white/10 bg-night/62 p-4 text-sm leading-6 text-white outline-none transition placeholder:text-white/36 focus:border-antique focus:ring-4 focus:ring-antique/10"
@@ -1212,6 +1191,377 @@ function ProfileSection() {
   );
 }
 
+
+// ─── Quiz Data ────────────────────────────────────────────────────────────────
+
+// ─── Quiz Data ────────────────────────────────────────────────────────────────
+type QuizOption = { id: string; text: string };
+type QuizQuestion = { id: string; question: string; options: QuizOption[]; correctId: string; explanation: string; verse: string; };
+type QuizCategory = { id: string; title: string; icon: string; color: string; premium: boolean; questions: QuizQuestion[]; };
+
+const quizCategories: QuizCategory[] = [
+  {
+    id: "karma",
+    title: "Karma Yoga",
+    icon: "⚡",
+    color: "antique",
+    premium: false,
+    questions: [
+      {
+        id: "k1",
+        question: "What does Krishna say is our right in Bhagavad Gita 2.47?",
+        options: [
+          { id: "a", text: "The right to enjoy the fruits of our actions" },
+          { id: "b", text: "The right to action, never to its fruits" },
+          { id: "c", text: "The right to choose between action and inaction" },
+          { id: "d", text: "The right to seek rewards from the Divine" }
+        ],
+        correctId: "b",
+        explanation: "Krishna teaches: perform your duty without attachment to results. Your right is only to act — not to the fruit of action.",
+        verse: "Gita 2.47"
+      },
+      {
+        id: "k2",
+        question: "Which yoga is described as the 'Yoga of Action' in the Bhagavad Gita?",
+        options: [
+          { id: "a", text: "Jnana Yoga" },
+          { id: "b", text: "Bhakti Yoga" },
+          { id: "c", text: "Karma Yoga" },
+          { id: "d", text: "Dhyana Yoga" }
+        ],
+        correctId: "c",
+        explanation: "Karma Yoga (Chapter 3) is the path of selfless action — performing duties without ego or attachment to results.",
+        verse: "Gita Chapter 3"
+      },
+      {
+        id: "k3",
+        question: "In Gita 3.8, Krishna says action is better than what?",
+        options: [
+          { id: "a", text: "Devotion" },
+          { id: "b", text: "Knowledge" },
+          { id: "c", text: "Inaction" },
+          { id: "d", text: "Renunciation" }
+        ],
+        correctId: "c",
+        explanation: "Perform your prescribed duty, for action is better than inaction. Even the maintenance of your body requires action.",
+        verse: "Gita 3.8"
+      },
+      {
+        id: "k4",
+        question: "What is 'Nishkama Karma'?",
+        options: [
+          { id: "a", text: "Action done with desire" },
+          { id: "b", text: "Renunciation of all action" },
+          { id: "c", text: "Desireless action — acting without attachment to results" },
+          { id: "d", text: "Action done for God alone" }
+        ],
+        correctId: "c",
+        explanation: "Nishkama Karma means acting without desire for the fruits — the core teaching of Karma Yoga.",
+        verse: "Gita 3.19"
+      },
+      {
+        id: "k5",
+        question: "According to Gita 3.27, who is deluded into thinking 'I am the doer'?",
+        options: [
+          { id: "a", text: "The wise seer" },
+          { id: "b", text: "The one ignorant of the gunas" },
+          { id: "c", text: "The devoted one" },
+          { id: "d", text: "The renunciant" }
+        ],
+        correctId: "b",
+        explanation: "All actions are performed by the three modes of material nature. The deluded — ignorant of the gunas — think themselves the doer.",
+        verse: "Gita 3.27"
+      }
+    ]
+  },
+  {
+    id: "bhakti",
+    title: "Bhakti Yoga",
+    icon: "🙏",
+    color: "peacock",
+    premium: false,
+    questions: [
+      {
+        id: "b1",
+        question: "What does Krishna promise to devotees in Gita 9.22?",
+        options: [
+          { id: "a", text: "He will give them wealth and success" },
+          { id: "b", text: "He carries what they lack and preserves what they have" },
+          { id: "c", text: "He will protect them from all enemies" },
+          { id: "d", text: "He will grant them liberation immediately" }
+        ],
+        correctId: "b",
+        explanation: "For those who worship Me with devotion, I carry what they lack and preserve what they have — a personal divine covenant.",
+        verse: "Gita 9.22"
+      },
+      {
+        id: "b2",
+        question: "In Gita 9.26, what offering does Krishna say He will accept?",
+        options: [
+          { id: "a", text: "Gold, silver, and precious gems" },
+          { id: "b", text: "A leaf, flower, fruit, or water offered with love" },
+          { id: "c", text: "Grand temple ceremonies" },
+          { id: "d", text: "Years of meditation and austerity" }
+        ],
+        correctId: "b",
+        explanation: "If one offers Me with love a leaf, flower, fruit, or water — I accept it. What matters is the love, not the grandeur.",
+        verse: "Gita 9.26"
+      },
+      {
+        id: "b3",
+        question: "What is the first quality of a devotee dear to Krishna (Gita 12.13)?",
+        options: [
+          { id: "a", text: "Great intelligence and scholarship" },
+          { id: "b", text: "Non-hatred toward all beings" },
+          { id: "c", text: "Perfect adherence to ritual" },
+          { id: "d", text: "Physical renunciation" }
+        ],
+        correctId: "b",
+        explanation: "One who is not hateful toward any being, who is friendly and compassionate — such a devotee is very dear to Me.",
+        verse: "Gita 12.13"
+      },
+      {
+        id: "b4",
+        question: "What is the final instruction Krishna gives in Gita 18.65?",
+        options: [
+          { id: "a", text: "Renounce family and become a monk" },
+          { id: "b", text: "Study all scriptures and perform rituals" },
+          { id: "c", text: "Fix your mind on Me, be devoted to Me — you are dear to Me" },
+          { id: "d", text: "Follow your caste duty perfectly" }
+        ],
+        correctId: "c",
+        explanation: "Fix your mind on Me, be devoted to Me, worship Me — so shall you come to Me. I promise you truly, for you are dear to Me.",
+        verse: "Gita 18.65"
+      },
+      {
+        id: "b5",
+        question: "What is the core message of Gita 18.66?",
+        options: [
+          { id: "a", text: "Fight the battle and claim your kingdom" },
+          { id: "b", text: "Follow your own dharma above all else" },
+          { id: "c", text: "Surrender to Me alone — I will free you from all sins" },
+          { id: "d", text: "Renounce all actions and become a monk" }
+        ],
+        correctId: "c",
+        explanation: "Abandon all varieties of religion and just surrender unto Me. I shall deliver you from all sinful reactions. Do not fear.",
+        verse: "Gita 18.66"
+      }
+    ]
+  },
+  {
+    id: "jnana",
+    title: "Jnana Yoga",
+    icon: "📖",
+    color: "lotus",
+    premium: true,
+    questions: []
+  },
+  {
+    id: "dhyana",
+    title: "Dhyana Yoga",
+    icon: "🧘",
+    color: "peacock",
+    premium: true,
+    questions: []
+  },
+  {
+    id: "atma",
+    title: "Self-Knowledge",
+    icon: "✨",
+    color: "antique",
+    premium: true,
+    questions: []
+  }
+];
+
+function QuizModal({ category, onClose }: { category: QuizCategory; onClose: () => void }) {
+  const questions = category.questions;
+  const [current, setCurrent] = useState(0);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [answered, setAnswered] = useState<Record<string, string>>({});
+  const [showResult, setShowResult] = useState(false);
+
+  const question = questions[current];
+  const isAnswered = !!answered[question?.id];
+  const chosenId = answered[question?.id] ?? selected;
+  const isCorrect = chosenId === question?.correctId;
+  const score = questions.filter((q) => answered[q.id] === q.correctId).length;
+  const progress = ((current + (isAnswered ? 1 : 0)) / questions.length) * 100;
+
+  function handleNext() {
+    if (current < questions.length - 1) { setCurrent((c) => c + 1); setSelected(null); }
+    else setShowResult(true);
+  }
+
+  function handleRestart() { setCurrent(0); setSelected(null); setAnswered({}); setShowResult(false); }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-night/82 backdrop-blur-md" onClick={onClose} />
+      <motion.div
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="relative z-10 flex w-full max-w-4xl flex-col overflow-hidden rounded-[2rem] border border-antique/20 bg-[#0b0718] shadow-[0_40px_120px_rgba(0,0,0,0.7)]"
+        initial={{ opacity: 0, scale: 0.95, y: 24 }}
+        style={{ maxHeight: "88vh" }}
+        transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-white/8 px-6 py-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-antique/72">{category.icon} {category.title}</p>
+            <p className="mt-0.5 text-sm text-white/50">{questions.length} Questions</p>
+          </div>
+          <button className="rounded-xl border border-white/12 px-4 py-2 text-sm text-white/60 hover:text-white transition" onClick={onClose} type="button">✕ Close</button>
+        </div>
+
+        <div className="overflow-y-auto p-6 md:p-8" style={{ flex: 1 }}>
+          {showResult ? (
+            <motion.div animate={{ opacity: 1, y: 0 }} className="text-center" initial={{ opacity: 0, y: 16 }} transition={{ duration: 0.5 }}>
+              <ChakraMark />
+              <p className="mt-6 text-xs font-semibold uppercase tracking-[0.3em] text-antique/75">Quiz Complete</p>
+              <h3 className="mt-3 text-5xl font-bold text-white">{score} <span className="text-antique/60 text-3xl">/ {questions.length}</span></h3>
+              <p className="mt-4 text-base leading-7 text-white/65 max-w-lg mx-auto">
+                {score === questions.length ? "Perfect! Your Gita wisdom shines bright. Krishna is pleased." :
+                 score >= Math.floor(questions.length * 0.6) ? "Well done, seeker. Reflect on the verses you missed." :
+                 "Every question missed is a verse waiting to be read. Study and return."}
+              </p>
+              <div className="mt-8 space-y-2 text-left">
+                {questions.map((q, idx) => {
+                  const correct = answered[q.id] === q.correctId;
+                  return (
+                    <div className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm ${correct ? "border border-peacock/25 bg-peacock/8 text-peacock" : "border border-red-300/18 bg-red-500/8 text-red-200"}`} key={q.id}>
+                      <span className="shrink-0 font-bold">{correct ? "✓" : "✗"}</span>
+                      <span className="text-white/70">Q{idx + 1}:</span>
+                      <span className="truncate">{q.question.slice(0, 55)}…</span>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-8 flex flex-wrap justify-center gap-3">
+                <DivineButton onClick={handleRestart}><Sparkles className="h-4 w-4" />Retake Quiz</DivineButton>
+                <DivineButton onClick={onClose} variant="ghost">Close</DivineButton>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div animate={{ opacity: 1, y: 0 }} initial={{ opacity: 0, y: 16 }} key={question.id} transition={{ duration: 0.4 }}>
+              {/* Progress */}
+              <div className="mb-6 flex items-center gap-4">
+                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
+                  <div className="h-full rounded-full bg-antique transition-all duration-500" style={{ width: `${progress}%` }} />
+                </div>
+                <span className="shrink-0 text-xs font-semibold tabular-nums text-white/46">{current + 1} / {questions.length}</span>
+              </div>
+              {/* Question */}
+              <div className="mb-7">
+                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-antique/65">{question.verse}</p>
+                <h3 className="mt-3 text-xl font-semibold leading-8 text-white md:text-2xl">{question.question}</h3>
+              </div>
+              {/* Options */}
+              <div className="grid gap-3 md:grid-cols-2">
+                {question.options.map((opt) => {
+                  const isSel = chosenId === opt.id;
+                  const isCorrectOpt = opt.id === question.correctId;
+                  let cls = "relative flex cursor-pointer items-start gap-3 rounded-2xl border px-4 py-4 text-sm leading-6 transition-all text-left w-full ";
+                  if (!isAnswered) cls += isSel ? "border-antique/70 bg-antique/12 text-white" : "border-white/10 bg-white/[0.04] text-white/78 hover:border-antique/40 hover:bg-antique/7";
+                  else if (isCorrectOpt) cls += "border-peacock/40 bg-peacock/10 text-peacock";
+                  else if (isSel) cls += "border-red-400/40 bg-red-500/10 text-red-200";
+                  else cls += "border-white/6 bg-white/[0.03] text-white/36";
+                  return (
+                    <button className={cls} disabled={isAnswered} key={opt.id} onClick={() => !isAnswered && setSelected(opt.id)} type="button">
+                      <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-xs font-bold ${isAnswered && isCorrectOpt ? "border-peacock bg-peacock text-night" : isAnswered && isSel ? "border-red-400 text-red-200" : isSel ? "border-antique bg-antique text-night" : "border-white/30 text-white/50"}`}>
+                        {isAnswered && isCorrectOpt ? "✓" : isAnswered && isSel && !isCorrectOpt ? "✗" : opt.id.toUpperCase()}
+                      </span>
+                      <span className="flex-1 text-left">{opt.text}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              {/* Explanation */}
+              {isAnswered && (
+                <motion.div animate={{ opacity: 1, height: "auto" }} className="mt-5 overflow-hidden" initial={{ opacity: 0, height: 0 }} transition={{ duration: 0.45 }}>
+                  <div className={`rounded-2xl border p-4 ${isCorrect ? "border-peacock/25 bg-peacock/[0.08]" : "border-red-300/20 bg-red-500/[0.07]"}`}>
+                    <p className={`mb-1 text-xs font-semibold uppercase tracking-[0.22em] ${isCorrect ? "text-peacock/80" : "text-red-300/80"}`}>{isCorrect ? "Correct ✓" : "The right answer"}</p>
+                    <p className="text-sm leading-6 text-white/78">{question.explanation}</p>
+                  </div>
+                </motion.div>
+              )}
+              {/* Actions */}
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                {!isAnswered ? (
+                  <DivineButton disabled={!selected} onClick={() => { if (selected) setAnswered((p) => ({ ...p, [question.id]: selected })); setSelected(null); }}>
+                    <Shield className="h-4 w-4" />Confirm Answer
+                  </DivineButton>
+                ) : (
+                  <DivineButton onClick={handleNext}>
+                    <Sparkles className="h-4 w-4" />{current < questions.length - 1 ? "Next Question" : "See Results"}
+                  </DivineButton>
+                )}
+                <span className="text-xs text-white/40">Score: {score} / {Object.keys(answered).length}</span>
+              </div>
+            </motion.div>
+          )}
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+function QuizSection() {
+  const [activeCategory, setActiveCategory] = useState<QuizCategory | null>(null);
+
+  return (
+    <section className="relative z-10 px-4 py-16" id="quiz">
+      <SectionHeading
+        eyebrow="Gita Knowledge Quiz"
+        title="Test Your Bhagavad Gita Wisdom"
+        copy="Choose a category and dive deep into Krishna's eternal teachings. Free categories available now — premium unlocks advanced wisdom."
+      />
+
+      <div className="mx-auto max-w-5xl">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {quizCategories.map((cat) => (
+            <motion.div
+              className={`glass-card krishna-card relative flex flex-col overflow-hidden rounded-[1.75rem] p-6 ${cat.premium ? "opacity-85" : ""}`}
+              data-reveal
+              key={cat.id}
+              whileHover={{ scale: 1.015, y: -2 }}
+              transition={{ duration: 0.2 }}
+            >
+              {cat.premium && (
+                <div className="absolute right-4 top-4 rounded-full border border-antique/40 bg-antique/12 px-2.5 py-1 text-xs font-bold text-antique">
+                  👑 Premium
+                </div>
+              )}
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-antique/10 text-2xl border border-antique/20">
+                {cat.icon}
+              </div>
+              <h3 className="text-xl font-semibold text-white">{cat.title}</h3>
+              <p className="mt-2 flex-1 text-sm leading-6 text-white/58">
+                {cat.premium ? "Advanced questions unlock with a premium subscription. Coming soon." : `${cat.questions.length} questions on the path of ${cat.title}.`}
+              </p>
+              <div className="mt-5">
+                {cat.premium ? (
+                  <button className="w-full rounded-xl border border-white/12 py-3 text-sm font-semibold text-white/50 transition cursor-not-allowed" disabled type="button">
+                    🔒 Unlock Premium
+                  </button>
+                ) : (
+                  <DivineButton className="w-full justify-center" onClick={() => setActiveCategory(cat)}>
+                    <Sparkles className="h-4 w-4" />Start Quiz
+                  </DivineButton>
+                )}
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+      {activeCategory && (
+        <QuizModal category={activeCategory} onClose={() => setActiveCategory(null)} />
+      )}
+    </section>
+  );
+}
+
 export default function GeetaAiApp() {
   const [query, setQuery] = useState("");
   const [selectedSituation, setSelectedSituation] = useState<SituationKey | "">("");
@@ -1228,15 +1578,17 @@ export default function GeetaAiApp() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  useSacredAudio({ fluteEnabled, fluteVolume, omEnabled, omVolume });
+  const { fluteStatus, omStatus } = useSacredAudio({ fluteEnabled, fluteVolume, omEnabled, omVolume });
   useRevealAnimations(response?.verse.id ?? "initial");
 
   async function handleAsk(event?: FormEvent<HTMLFormElement>, situationOverride?: SituationKey) {
     event?.preventDefault();
-    const activeQuery = situationOverride ? `I need guidance for ${situationMap[situationOverride].label.toLowerCase()}. ${situationMap[situationOverride].mantra}` : query;
+    const activeQuery = situationOverride
+      ? `I need guidance for ${situationMap[situationOverride].label.toLowerCase()}. ${situationMap[situationOverride].mantra}`
+      : query;
 
-    if (activeQuery.trim().length < 6) {
-      setError("Please write a little more so the guidance can be meaningful.");
+    if (activeQuery.trim().length < 2) {
+      setError("Please write at least a word or two so the guidance can be meaningful.");
       return;
     }
 
@@ -1255,15 +1607,21 @@ export default function GeetaAiApp() {
         throw new Error(data.error || "Guidance could not be generated.");
       }
 
-      const data = (await guidanceResponse.json()) as GuidanceResponse;
+      const data = (await guidanceResponse.json()) as GuidanceResponse & { isLowConfidence?: boolean };
       setResponse(data);
       setQuery(situationOverride ? activeQuery : query);
+
+      // Show soft notification for low-confidence / missing content
+      if (data.isLowConfidence) {
+        setError("⚠️ We found a partial match for your question. This topic will be added to our verse library soon — we will update you!");
+      }
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
   }
+
 
   async function playGuidance() {
     if (!response) {
@@ -1409,7 +1767,7 @@ export default function GeetaAiApp() {
       </div>
 
       <header className="sticky top-0 z-40 border-b border-white/10 bg-night/58 backdrop-blur-2xl">
-        <div className="relative mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 pr-20 lg:pr-4">
+        <div className="relative mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 lg:pr-4">
           <a className="flex min-w-0 items-center gap-3" href="#top">
             <ChakraMark compact />
             <span>
@@ -1514,19 +1872,39 @@ export default function GeetaAiApp() {
                 value={query}
               />
 
-              <div className="mt-4 flex flex-wrap gap-2">
-                {situationEntries.map(([key, situation]) => (
-                  <button
-                    className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                      selectedSituation === key ? "border-antique bg-antique text-night" : "border-white/12 bg-white/[0.05] text-white/70 hover:border-antique/50"
-                    }`}
-                    key={key}
-                    onClick={() => setSelectedSituation(key)}
-                    type="button"
-                  >
-                    {situation.label}
-                  </button>
-                ))}
+
+              {/* Emotion mood tags */}
+              <div className="mt-4">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.22em] text-white/40">How are you feeling?</p>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { emoji: "😊", label: "Happy", q: "I am feeling happy and want to stay positive, grow, and deepen my spiritual practice." },
+                    { emoji: "😢", label: "Sad", q: "I am feeling very sad and need comfort, inner strength, and hope to carry on." },
+                    { emoji: "😰", label: "Anxious", q: "I am feeling anxious and overthinking everything. I need peace and clarity." },
+                    { emoji: "😠", label: "Angry", q: "I am feeling angry and need guidance to control my emotions and respond wisely." },
+                    { emoji: "😕", label: "Confused", q: "I am confused and need clarity on my path and purpose in life." },
+                    { emoji: "😔", label: "Lonely", q: "I am feeling deeply lonely and disconnected from people and purpose." },
+                    { emoji: "💪", label: "Motivated", q: "I am feeling motivated and want to channel this energy into meaningful action." },
+                    { emoji: "😞", label: "Hopeless", q: "I am feeling hopeless and struggling to see any way forward. I need hope." },
+                    { emoji: "🙏", label: "Grateful", q: "I am feeling deeply grateful and want to deepen my devotion and spiritual practice." },
+                    { emoji: "😓", label: "Stressed", q: "I am under a lot of stress and pressure from many directions. I need relief." },
+                    { emoji: "😨", label: "Fearful", q: "I am afraid of the future and fear of failure is stopping me from moving forward." },
+                    { emoji: "💔", label: "Heartbroken", q: "I am heartbroken from a relationship ending and need healing and wisdom." },
+                    { emoji: "🌟", label: "Lost", q: "I feel lost in life and do not know my purpose or which direction to take." },
+                    { emoji: "⚡", label: "Jealous", q: "I am feeling jealous and comparing myself to others and it is making me unhappy." },
+                    { emoji: "🔥", label: "Negative", q: "I am stuck in negative thoughts and feelings and need to shift my state." },
+                    { emoji: "☀️", label: "Positive", q: "I want to cultivate a positive mindset and live with more joy and gratitude." }
+                  ].map(({ emoji, label, q }) => (
+                    <button
+                      className="rounded-full border border-white/12 bg-white/[0.05] px-3 py-1.5 text-sm font-semibold text-white/74 transition hover:border-antique/60 hover:bg-antique/10 hover:text-white active:scale-95"
+                      key={label}
+                      onClick={() => setQuery(q)}
+                      type="button"
+                    >
+                      {emoji} {label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {error && (
@@ -1559,6 +1937,7 @@ export default function GeetaAiApp() {
                   icon={<Volume2 className="h-5 w-5" />}
                   onToggle={() => setOmEnabled((current) => !current)}
                   onVolumeChange={setOmVolume}
+                  status={omStatus}
                   testId="om-audio-controller"
                   title="OM Chant"
                   volume={omVolume}
@@ -1569,6 +1948,7 @@ export default function GeetaAiApp() {
                   icon={<Wind className="h-5 w-5" />}
                   onToggle={() => setFluteEnabled((current) => !current)}
                   onVolumeChange={setFluteVolume}
+                  status={fluteStatus}
                   testId="flute-audio-controller"
                   title="Flute Music"
                   volume={fluteVolume}
@@ -1647,8 +2027,8 @@ export default function GeetaAiApp() {
       <Gallery />
       <GrowthSystem />
       <FeedbackSection />
-      <ContactSection />
       <ProfileSection />
+      <QuizSection />
 
       <footer className="relative z-10 border-t border-white/10 px-4 py-10">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 text-sm text-white/54 md:flex-row md:items-center md:justify-between">
@@ -1669,11 +2049,11 @@ export default function GeetaAiApp() {
             <a className="hover:text-antique" href="#feedback">
               Feedback
             </a>
-            <a className="hover:text-antique" href="#contact">
-              Contact
-            </a>
             <a className="hover:text-antique" href="#profile">
               Profile
+            </a>
+            <a className="hover:text-antique" href="#quiz">
+              Quiz
             </a>
           </div>
         </div>

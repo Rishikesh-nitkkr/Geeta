@@ -66,7 +66,7 @@ describe("KrishnaAiApp UI controls", () => {
 
     const feedbackForm = screen.getByTestId("feedback-form");
     fireEvent.change(within(feedbackForm).getByPlaceholderText("Your name"), { target: { value: "Test User" } });
-    fireEvent.change(within(feedbackForm).getByPlaceholderText("you@example.com"), { target: { value: "test@example.com" } });
+    fireEvent.change(within(feedbackForm).getByRole("combobox"), { target: { value: "audio" } });
     fireEvent.change(within(feedbackForm).getByPlaceholderText("Tell us what should feel calmer, clearer, or more personal."), {
       target: { value: "The new audio controls feel calm." }
     });
@@ -75,8 +75,6 @@ describe("KrishnaAiApp UI controls", () => {
     expect(screen.getByText("Feedback received. Thank you.")).toBeInTheDocument();
 
     const profileForm = screen.getByTestId("profile-form");
-    fireEvent.change(within(profileForm).getByPlaceholderText("Your name"), { target: { value: "Rishi" } });
-    fireEvent.change(within(profileForm).getByPlaceholderText("you@example.com"), { target: { value: "rishi@example.com" } });
     fireEvent.change(within(profileForm).getByPlaceholderText("Voice, ambience, guidance tone, meditation style..."), {
       target: { value: "Soft voice, OM only, slow pacing." }
     });
@@ -84,5 +82,6 @@ describe("KrishnaAiApp UI controls", () => {
 
     expect(screen.getByText("Profile saved.")).toBeInTheDocument();
     expect(window.localStorage.getItem("krishna-ai-profile")).toContain("Soft voice, OM only, slow pacing.");
+    expect(window.localStorage.getItem("krishna-ai-profile")).not.toContain("@");
   });
 });
