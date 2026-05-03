@@ -32,6 +32,7 @@ import { chapters, galleryImages, situationMap, wisdomQuotes } from "@/lib/gita-
 import { getDailyVerse, getNextVerse } from "@/lib/guidance";
 import type { GitaVerse, GrowthEntry, GuidanceResponse, SituationKey } from "@/lib/types";
 import { GalleryManager } from "./GalleryManager";
+import { UserMenu } from "./UserMenu";
 
 const navItems = [
   { href: "#ask", label: "Ask" },
@@ -1763,6 +1764,7 @@ export default function GeetaAiApp() {
                 {item.label}
               </a>
             ))}
+            <UserMenu />
           </nav>
 
           <button
@@ -1794,6 +1796,9 @@ export default function GeetaAiApp() {
                     {item.label}
                   </a>
                 ))}
+                <div className="pt-1">
+                  <UserMenu />
+                </div>
               </div>
             </motion.nav>
           )}
