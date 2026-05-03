@@ -7,6 +7,7 @@ import {
   Brain,
   ChevronDown,
   Download,
+  ExternalLink,
   Flame,
   Heart,
   Loader2,
@@ -25,10 +26,12 @@ import {
   Wind,
   X
 } from "lucide-react";
+import Link from "next/link";
 import { type FormEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { chapters, galleryImages, situationMap, wisdomQuotes } from "@/lib/gita-data";
 import { getDailyVerse, getNextVerse } from "@/lib/guidance";
 import type { GitaVerse, GrowthEntry, GuidanceResponse, SituationKey } from "@/lib/types";
+import { GalleryManager } from "./GalleryManager";
 
 const navItems = [
   { href: "#ask", label: "Ask" },
@@ -723,67 +726,7 @@ function GitaReader() {
 }
 
 function Gallery() {
-  const [activeImage, setActiveImage] = useState<(typeof galleryImages)[number] | null>(null);
-
-  return (
-    <section className="px-4 py-16" id="gallery">
-      <SectionHeading
-        copy="A devotional image grid with hover zoom and lightbox preview for the visual side of the platform."
-        eyebrow="Krishna Gallery"
-        title="Sacred Visual Atmosphere"
-      />
-
-      <div className="mx-auto grid max-w-7xl gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {galleryImages.map((image) => (
-          <button className="group glass-card krishna-card overflow-hidden rounded-[1.25rem] text-left" data-reveal key={image.id} onClick={() => setActiveImage(image)} type="button">
-            <div className="relative h-64 overflow-hidden">
-              <img alt={image.title} className={`h-full w-full object-cover transition duration-700 group-hover:scale-110 ${image.focus}`} src={image.image} />
-              <div className="absolute inset-0 bg-gradient-to-t from-night/92 via-transparent to-transparent" />
-              <div className="absolute bottom-4 left-4 right-4">
-                <p className="text-lg font-semibold text-white">{image.title}</p>
-                <p className="mt-1 text-sm text-white/62">{image.description}</p>
-              </div>
-            </div>
-          </button>
-        ))}
-      </div>
-
-      <AnimatePresence>
-        {activeImage && (
-          <motion.div
-            animate={{ opacity: 1 }}
-            className="fixed inset-0 z-50 grid place-items-center bg-black/82 p-4 backdrop-blur-xl"
-            exit={{ opacity: 0 }}
-            initial={{ opacity: 0 }}
-            onClick={() => setActiveImage(null)}
-            transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
-          >
-            <motion.div
-              animate={{ scale: 1, y: 0 }}
-              className="relative max-h-[88vh] w-full max-w-5xl overflow-hidden rounded-[1.75rem] border border-white/12 bg-night"
-              initial={{ scale: 0.96, y: 20 }}
-              onClick={(event) => event.stopPropagation()}
-              transition={{ duration: 0.9, ease: [0.4, 0, 0.2, 1] }}
-            >
-              <button
-                aria-label="Close image preview"
-                className="absolute right-4 top-4 z-10 grid h-11 w-11 place-items-center rounded-lg bg-black/50 text-white backdrop-blur transition hover:bg-black/70"
-                onClick={() => setActiveImage(null)}
-                type="button"
-              >
-                <X className="h-5 w-5" />
-              </button>
-              <img alt={activeImage.title} className={`max-h-[76vh] w-full object-cover ${activeImage.focus}`} src={activeImage.image} />
-              <div className="p-5">
-                <h3 className="text-2xl font-semibold text-white">{activeImage.title}</h3>
-                <p className="mt-2 text-sm text-white/64">{activeImage.description}</p>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </section>
-  );
+  return <GalleryManager />;
 }
 
 function MeditationModal({
@@ -1141,6 +1084,14 @@ function FeedbackSection() {
 function ProfileSection() {
   const [profile, setProfile] = useState<ProfileForm>(() => readStoredProfile());
   const [saved, setSaved] = useState(false);
+  const [userProfile, setUserProfile] = useState<{ fullName?: string; profilePicture?: string } | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("krishna-ai-user-profile");
+      if (raw) setUserProfile(JSON.parse(raw) as { fullName?: string; profilePicture?: string });
+    } catch { /* ignore */ }
+  }, []);
 
   function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -1151,10 +1102,40 @@ function ProfileSection() {
   return (
     <section className="relative z-10 px-4 py-16" id="profile">
       <SectionHeading
-        copy="Keep only non-sensitive local preferences so the experience can feel calmer and more personal during continued use."
+        copy="Personalise your Geeta AI experience and manage your full account details."
         eyebrow="Profile"
         title="Experience Preferences"
       />
+
+      {/* Full Profile Link Card */}
+      <div className="mx-auto mb-8 max-w-4xl">
+        <Link href="/profile">
+          <motion.div
+            className="glass-card krishna-card flex items-center justify-between rounded-[1.75rem] p-5 cursor-pointer"
+            data-reveal
+            whileHover={{ scale: 1.01 }}
+          >
+            <div className="flex items-center gap-4">
+              <div className="relative h-14 w-14 overflow-hidden rounded-full border-2 border-yellow-400/30">
+                {userProfile?.profilePicture ? (
+                  <img alt="Profile" className="h-full w-full object-cover" src={userProfile.profilePicture} />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-yellow-400/10 text-2xl">🕉️</div>
+                )}
+              </div>
+              <div>
+                <p className="font-semibold text-white">{userProfile?.fullName ?? "Set up your profile"}</p>
+                <p className="text-sm text-white/50">Manage name, email, photo, password, Google Sign-In</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 rounded-xl border border-yellow-400/30 bg-yellow-400/10 px-4 py-2 text-sm font-semibold text-yellow-300">
+              <ExternalLink className="h-4 w-4" /> Full Profile
+            </div>
+          </motion.div>
+        </Link>
+      </div>
+
+      {/* Preferences form */}
       <form className="glass-card krishna-card mx-auto max-w-4xl rounded-[1.75rem] p-6" data-reveal data-testid="profile-form" onSubmit={saveProfile}>
         <div className="mb-6 flex items-center gap-3">
           <div className="grid h-12 w-12 place-items-center rounded-xl border border-antique/20 bg-antique/10 text-antique">
@@ -1178,11 +1159,11 @@ function ProfileSection() {
         <div className="mt-5 flex flex-wrap items-center gap-3">
           <DivineButton type="submit">
             <Save className="h-4 w-4" />
-            Save Profile
+            Save Preferences
           </DivineButton>
           {saved && (
             <p className="rounded-full border border-antique/20 bg-antique/10 px-4 py-2 text-sm font-semibold text-antique" role="status">
-              Profile saved.
+              Preferences saved.
             </p>
           )}
         </div>
